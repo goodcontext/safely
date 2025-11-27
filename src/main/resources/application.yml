@@ -1,0 +1,43 @@
+spring:
+  application:
+    name: safely
+
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  jpa:
+    hibernate:
+      ddl-auto: none   # schema.sql을 사용하므로 none
+    properties:
+      hibernate:
+        format_sql: true
+    show-sql: true
+
+  sql:
+    init:
+      mode: always      # schema.sql + data.sql 실행
+      schema-locations: classpath:schema.sql
+      data-locations: classpath:data.sql
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: redis1234!
+
+jwt:
+  secret-key: "your-very-long-jwt-secret-key-should-be-very-long" # 개발 단계 기본 비밀번호 이므로 GitHub에 그냥 올림.
+  access-token-expire-ms: 900000      # 15분
+  refresh-token-expire-ms: 604800000  # 7일
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG
