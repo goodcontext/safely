@@ -49,7 +49,7 @@ public class SecurityConfig {
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable);
 
-        // JWT를 사용하면 STATELESS를 반드시 명시하는 게 좋다고 함.(ChatGPT-5.1 버전의 설명)
+        // JWT를 사용하면 STATELESS를 반드시 명시하는 게 좋다고 함. (출처 : ChatGPT-5.1)
         http
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
