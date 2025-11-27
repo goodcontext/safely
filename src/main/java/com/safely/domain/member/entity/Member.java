@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor(access = AccessLevel.PROTECTED) // 엔티티 클래스는 Member member = new Member();처럼 외부에서 아무나 막 생성하면 안 된다.
 @AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
 @Builder
