@@ -1,4 +1,4 @@
-package com.safely.global.config;
+package com.safely.global.security.config;
 
 import com.safely.global.security.filter.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
@@ -12,9 +12,6 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-
-import java.util.Arrays;
-import java.util.stream.Stream;
 
 @Configuration
 @RequiredArgsConstructor

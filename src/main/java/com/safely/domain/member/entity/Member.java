@@ -1,5 +1,6 @@
 package com.safely.domain.member.entity;
 
+import com.safely.domain.common.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -12,10 +13,9 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED) // 엔티티 클래스는 Member member = new Member();처럼 외부에서 아무나 막 생성하면 안 된다.
 @AllArgsConstructor
-@EntityListeners(AuditingEntityListener.class)
 @Builder
-@Table(name = "member")
-public class Member {
+@Table(name = "members")
+public class Member extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -34,12 +34,4 @@ public class Member {
 
     @Column(nullable = false, length = 50)
     private String authority;
-
-    @CreatedDate
-    @Column(nullable = false)
-    private LocalDateTime createdAt;
-
-    @LastModifiedDate
-    @Column(nullable = false)
-    private LocalDateTime updatedAt;
 }

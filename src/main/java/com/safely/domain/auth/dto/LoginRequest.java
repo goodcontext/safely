@@ -1,5 +1,7 @@
 package com.safely.domain.auth.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -13,6 +15,8 @@ import lombok.NoArgsConstructor;
  */
 @Getter
 @NoArgsConstructor // Jackson이 JSON 역직렬화 하려면 기본 생성자(NoArgsConstructor)가 필요함.
+@AllArgsConstructor // 테스트 코드 작성 위해서 추가함.
+@Builder // 테스트 코드 작성 위해서 추가함.
 public class LoginRequest {
     private String email;
     private String password;
