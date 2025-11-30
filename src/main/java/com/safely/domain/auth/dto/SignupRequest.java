@@ -1,8 +1,9 @@
 package com.safely.domain.auth.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 /*
  * 최신 흐름은 DTO에 setter를 사용하지 않음.
@@ -14,6 +15,8 @@ import lombok.Setter;
  */
 @Getter
 @NoArgsConstructor
+@AllArgsConstructor // 테스트 코드 작성 위해서 추가함.
+@Builder // 테스트 코드 작성 위해서 추가함.
 public class SignupRequest {
     private String email;
     private String password;

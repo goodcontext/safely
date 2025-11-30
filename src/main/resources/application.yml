@@ -14,7 +14,8 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: none   # schema.sql을 사용하므로 none
+      ddl-auto: create
+    defer-datasource-initialization: true  # Hibernate가 테이블을 다 만든 후에 data.sql을 실행하라는 뜻
     properties:
       hibernate:
         format_sql: true
@@ -22,8 +23,8 @@ spring:
 
   sql:
     init:
-      mode: always      # schema.sql + data.sql 실행
-      schema-locations: classpath:schema.sql
+      mode: always      # data.sql 실행
+#      schema-locations: classpath:old_schema.sql
       data-locations: classpath:data.sql
 
   data:
