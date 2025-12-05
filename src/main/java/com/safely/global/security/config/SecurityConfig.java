@@ -8,6 +8,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -21,7 +22,7 @@ public class SecurityConfig {
     private final String[] authUrls = {
             "/",
             "/api/auth/**",
-            "/h2-console/**"   // H2 콘솔 열고 싶으면 추가
+            "/h2-console/**"
     };
 
     @Bean
@@ -56,6 +57,12 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(authUrls).permitAll()
                         .anyRequest().authenticated()
+                );
+
+        // h2-console에 접근할 때, localhost 접근이 거부되었습니다. 해결할 때 사용함. iframe 태그 사용 시 접근 허용 코드.
+        http
+                .headers(headers -> headers
+                        .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin)
                 );
 
         http
