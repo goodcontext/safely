@@ -31,8 +31,8 @@ public class AuthService {
         Authentication authentication =
                 authenticationManager.authenticate(
                         new UsernamePasswordAuthenticationToken(
-                                request.getEmail(),
-                                request.getPassword()
+                                request.email(),
+                                request.password()
                         )
                 );
 
@@ -67,18 +67,18 @@ public class AuthService {
     public SignupResponse signup(SignupRequest request) {
 
         // 이메일 중복 체크
-        if (memberRepository.existsByEmail(request.getEmail())) {
+        if (memberRepository.existsByEmail(request.email())) {
             throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
         }
 
         // 비밀번호 암호화
-        String encodedPassword = passwordEncoder.encode(request.getPassword());
+        String encodedPassword = passwordEncoder.encode(request.password());
 
         // 저장
         Member member = Member.builder()
-                .email(request.getEmail())
+                .email(request.email())
                 .password(encodedPassword)
-                .name(request.getName())
+                .name(request.name())
                 .profileImage(null)  // 프로필 이미지 적용 시 변경
                 .authority("ROLE_USER")
                 .build();
@@ -91,15 +91,11 @@ public class AuthService {
             throw new RuntimeException("회원 저장중 오류가 발생했습니다.", e);
         }
 
-        return SignupResponse.builder()
-                .id(saved.getId())
-                .email(saved.getEmail())
-                .name(saved.getName())
-                .build();
+        return SignupResponse.from(saved);
     }
 
     public TokenResponse reIssue(RefreshTokenRequest request) {
-        String refreshToken = request.getRefreshToken();
+        String refreshToken = request.refreshToken();
 
         if (!jwtProvider.validateToken(refreshToken)) {
             throw new RuntimeException("잘못된 리프레시 토큰입니다.");

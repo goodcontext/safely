@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 public class Member extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "members_id")
     private Long id;
 
     @Column(nullable = false, unique = true, length = 255)
@@ -34,4 +35,19 @@ public class Member extends BaseEntity {
 
     @Column(nullable = false, length = 50)
     private String authority;
+
+    // 회원 정보 수정
+    public void updateProfile(String name, String profileImage) {
+        if (name != null && !name.isBlank()) {
+            this.name = name;
+        }
+        if (profileImage != null) {
+            this.profileImage = profileImage;
+        }
+    }
+
+    // 비밀번호 변경
+    public void updatePassword(String encodedPassword) {
+        this.password = encodedPassword;
+    }
 }

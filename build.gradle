@@ -14,6 +14,12 @@ java {
 	}
 }
 
+dependencyManagement {
+    imports {
+        mavenBom "io.awspring.cloud:spring-cloud-aws-dependencies:3.4.1"
+    }
+}
+
 configurations {
 	compileOnly {
 		extendsFrom annotationProcessor
@@ -33,6 +39,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 	implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
     implementation 'io.jsonwebtoken:jjwt-api:0.13.0'
+    implementation 'io.awspring.cloud:spring-cloud-aws-starter-s3:3.4.1'
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'com.h2database:h2'
 	runtimeOnly 'com.mysql:mysql-connector-j'
