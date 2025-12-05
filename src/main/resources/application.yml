@@ -31,7 +31,7 @@ spring:
     redis:
       host: localhost
       port: 6379
-      password: redis1234!
+      password: redis1234! # 개발 단계라서 하드코딩함. aws 배포 전 삭제 예정.
 
   cloud:
     aws:
