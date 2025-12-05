@@ -23,7 +23,6 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
@@ -70,8 +69,8 @@ class AuthServiceUnitTest {
         SignupResponse response = authService.signup(request);
 
         // Then
-        assertThat(response.getEmail()).isEqualTo(request.getEmail());
-        assertThat(response.getName()).isEqualTo(request.getName());
+        assertThat(response.email()).isEqualTo(request.getEmail());
+        assertThat(response.name()).isEqualTo(request.getName());
 
         // Verify: save 메서드가 1번 호출되었는지 확인
         verify(memberRepository, times(1)).save(any(Member.class));
@@ -123,8 +122,8 @@ class AuthServiceUnitTest {
         TokenResponse response = authService.login(request);
 
         // Then
-        assertThat(response.getAccessToken()).isEqualTo("access-token");
-        assertThat(response.getRefreshToken()).isEqualTo("refresh-token");
+        assertThat(response.accessToken()).isEqualTo("access-token");
+        assertThat(response.refreshToken()).isEqualTo("refresh-token");
 
         // Verify: Redis에 Refresh 토큰 저장 로직이 호출되었는지 확인
         // eq는 set명령의 결괏값과 비교하는 것이 아니고, 인숫값으로 value값들을(10000L 같은 값들) 받았는지 비교함.
@@ -142,10 +141,8 @@ class AuthServiceUnitTest {
         // Given
         String oldRefreshToken = "old-refresh-token";
         Long userId = 1L;
-        RefreshTokenRequest request = new RefreshTokenRequest();
 
-        // DTO에 Setter가 없으므로 Reflection으로 값 주입
-        org.springframework.test.util.ReflectionTestUtils.setField(request, "refreshToken", oldRefreshToken);
+        RefreshTokenRequest request = new RefreshTokenRequest(oldRefreshToken);
 
         // Mocking
         given(jwtProvider.validateToken(oldRefreshToken)).willReturn(true);
@@ -164,8 +161,8 @@ class AuthServiceUnitTest {
         TokenResponse response = authService.reIssue(request);
 
         // Then
-        assertThat(response.getAccessToken()).isEqualTo("new-access");
-        assertThat(response.getRefreshToken()).isEqualTo("new-refresh");
+        assertThat(response.accessToken()).isEqualTo("new-access");
+        assertThat(response.refreshToken()).isEqualTo("new-refresh");
 
         // Verify: Redis 업데이트 확인
         verify(valueOperations).set(eq("refresh:" + userId), eq("new-refresh"), anyLong(), any());

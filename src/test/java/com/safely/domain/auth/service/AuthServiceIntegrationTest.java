@@ -59,11 +59,7 @@ class AuthServiceIntegrationTest {
     @Test
     @DisplayName("회원가입 성공: 암호화 저장 확인")
     void signup_Success() {
-        SignupRequest request = SignupRequest.builder()
-                .email("newtest@safely.com") // data.sql과 겹치지 않게 이메일 변경
-                .password("rawPassword")
-                .name("테스터")
-                .build();
+        SignupRequest request = new SignupRequest("newtest@safely.com", "rawPassword", "테스터");
 
         authService.signup(request);
 
@@ -90,8 +86,8 @@ class AuthServiceIntegrationTest {
 
         TokenResponse response = authService.login(new LoginRequest("loginuser@safely.com", "1234"));
 
-        assertThat(response.getAccessToken()).isNotNull();
-        assertThat(response.getRefreshToken()).isNotNull();
+        assertThat(response.accessToken()).isNotNull();
+        assertThat(response.refreshToken()).isNotNull();
     }
 
     @Test
