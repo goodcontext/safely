@@ -14,7 +14,6 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 @RequestMapping("/api/members")
 public class MemberController {
-
     private final MemberService memberService;
 
     // 1. 내 정보 조회

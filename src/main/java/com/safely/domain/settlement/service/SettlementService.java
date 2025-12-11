@@ -23,7 +23,6 @@ import java.util.Map;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class SettlementService {
-
     private final ExpenseRepository expenseRepository;
     private final GroupMemberRepository groupMemberRepository;
     private final SettlementRepository settlementRepository;

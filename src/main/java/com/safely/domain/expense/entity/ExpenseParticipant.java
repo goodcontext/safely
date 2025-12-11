@@ -12,8 +12,8 @@ import lombok.NoArgsConstructor;
 @Table(name = "expense_participants")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ExpenseParticipant {
-
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "expense_participant_id")
     private Long id;
 

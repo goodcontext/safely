@@ -19,7 +19,6 @@ import java.io.IOException;
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-
     private final JwtProvider jwtProvider;
     private final RedisTemplate<String, String> redisTemplate;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
@@ -34,7 +33,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 "/api/auth/**",
                 "/h2-console/**",
                 "/swagger-ui/**",
-                "/v3/**"
+                "/swagger-ui.html",
+                "/v3/api-docs/**"
         };
 
         for (String pattern : whiteList) {
