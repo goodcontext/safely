@@ -17,13 +17,13 @@ services:
 
       # [AWS EB 환경변수 주입]
       # 실제 값은 AWS Elastic Beanstalk 콘솔에서 설정한 값이 들어옵니다.
-      RDS_HOSTNAME: ${RDS_HOSTNAME}
-      RDS_PORT: ${RDS_PORT}
-      RDS_DB_NAME: ${RDS_DB_NAME}
+#      RDS_HOSTNAME: ${RDS_HOSTNAME} # AWS 파라미터 스토어에 등록되어 있어서 필요 없음.
+#      RDS_PORT: ${RDS_PORT} # AWS 파라미터 스토어에 등록되어 있어서 필요 없음.
+#      RDS_DB_NAME: ${RDS_DB_NAME} # AWS 파라미터 스토어에 등록되어 있어서 필요 없음.
 #      RDS_USERNAME: ${RDS_USERNAME} # AWS 파라미터 스토어에 spring.datasource.username 등록되어 있어서 필요 없음.
 #      RDS_PASSWORD: ${RDS_PASSWORD} # AWS 파라미터 스토어에 spring.datasource.password 등록되어 있어서 필요 없음.
 
-      S3_BUCKET: ${S3_BUCKET}
+#      S3_BUCKET: ${S3_BUCKET} # AWS 파라미터 스토어에 등록되어 있어서 필요 없음.
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID} # EB 환경 변수에 저장해야 함.
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY} # 금고 열쇠를 금고 안에 넣을 수는 없으니까 EB 환경변수에 평문 형태로 저장함.
       AWS_REGION: ${AWS_REGION} # EB 환경 변수에 저장해야 함.
