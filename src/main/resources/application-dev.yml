@@ -1,0 +1,42 @@
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop # 껐다 켜면 데이터 초기화
+    show-sql: true
+    defer-datasource-initialization: true
+
+  sql:
+    init:
+      mode: always
+      data-locations: classpath:data.sql
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: redis1234! # 로컬용 비밀번호
+
+jwt:
+  secret-key: "your-very-long-jwt-secret-key-local-dev-only" # 로컬용 키
+  access-token-expire-ms: 900000 # 15분
+  refresh-token-expire-ms: 604800000 # 7일
+
+logging:
+  level:
+    org.springframework: DEBUG
+    com.safely: DEBUG
