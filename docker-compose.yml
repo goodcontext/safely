@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  # 1. Spring Boot 애플리케이션
+  app:
+    build: .                    # 현재 폴더의 Dockerfile을 사용하여 빌드
+    ports:
+      - "80:8080"               # 외부 80 포트로 들어오면 -> 내부 8080(Spring)으로 연결
+    environment:
+      # [프로필 설정]
+      SPRING_PROFILES_ACTIVE: prod
+
+      # [Redis 설정] 'redis' 서비스 컨테이너와 연결
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+#      REDIS_PASSWORD: ${REDIS_PASSWORD} # AWS 파라미터 스토어에 spring.data.redis.password 등록되어 있어서 필요 없음.
+
+      # [AWS EB 환경변수 주입]
+      # 실제 값은 AWS Elastic Beanstalk 콘솔에서 설정한 값이 들어옵니다.
+      RDS_HOSTNAME: ${RDS_HOSTNAME}
+      RDS_PORT: ${RDS_PORT}
+      RDS_DB_NAME: ${RDS_DB_NAME}
+#      RDS_USERNAME: ${RDS_USERNAME} # AWS 파라미터 스토어에 spring.datasource.username 등록되어 있어서 필요 없음.
+#      RDS_PASSWORD: ${RDS_PASSWORD} # AWS 파라미터 스토어에 spring.datasource.password 등록되어 있어서 필요 없음.
+
+      S3_BUCKET: ${S3_BUCKET}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID} # EB 환경 변수에 저장해야 함.
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY} # 금고 열쇠를 금고 안에 넣을 수는 없으니까 EB 환경변수에 평문 형태로 저장함.
+      AWS_REGION: ${AWS_REGION} # EB 환경 변수에 저장해야 함.
+
+#      JWT_SECRET_KEY: ${JWT_SECRET_KEY} # AWS 파라미터 스토어에 jwt.secret-key 등록되어 있어서 필요 없음.
+    depends_on:
+      - redis                   # redis가 먼저 켜져야 앱이 실행됨
+
+  # 2. Redis 서버 (Sidecar)
+  redis:
+    image: redis:alpine         # 가볍고 안정적인 알파인 리눅스 기반 Redis 이미지
+    command: redis-server --requirepass ${REDIS_PASSWORD} # 이 구문 때문에 REDIS_PASSWORD는 EB 환경변수에 따로 등록해야 함.
+    ports:
+      - "6379:6379"             # 내부 통신용 (외부 노출은 보안 그룹으로 막힘)
