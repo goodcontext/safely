@@ -19,8 +19,8 @@ import java.util.List;
 @Table(name = "expenses")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Expense extends BaseEntity {
-
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "expense_id")
     private Long id;
 

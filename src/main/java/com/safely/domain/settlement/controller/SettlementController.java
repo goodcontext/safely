@@ -12,7 +12,6 @@ import java.util.List;
 @RequestMapping("/api/groups/{groupId}/settlements")
 @RequiredArgsConstructor
 public class SettlementController {
-
     private final SettlementService settlementService;
 
     // 1. 정산 프리뷰 (단순 조회)

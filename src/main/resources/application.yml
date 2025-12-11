@@ -48,6 +48,9 @@ spring:
         max-file-size: 10MB
         max-request-size: 10MB
 
+#  main:
+#    allow-bean-definition-overriding: true  # 의존성 충돌이 나면 빈 덮어 씌우기 (swagger 최신버전으로 했다가 오류떠서 시도해 봄.)
+
 jwt:
   secret-key: "your-very-long-jwt-secret-key-should-be-very-long" # 개발 단계 기본 비밀번호 이므로 GitHub에 그냥 올림.
   access-token-expire-ms: 900000      # 15분
