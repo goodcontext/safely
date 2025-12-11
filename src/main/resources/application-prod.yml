@@ -1,0 +1,45 @@
+spring:
+  config:
+    activate:
+      on-profile: prod
+    # [핵심] AWS 파라미터 스토어의 값들을 내 설정처럼 불러옴
+    import: "aws-parameterstore:/config/safely/"
+
+  application:
+    name: safely
+
+  datasource:
+    # URL은 환경변수 조각들을 모아서 완성 (파라미터 스토어 X)
+    url: jdbc:mysql://${RDS_HOSTNAME}:${RDS_PORT}/${RDS_DB_NAME}?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    # username 삭제됨 (파라미터 스토어에서 자동 주입)
+    # password 삭제됨 (파라미터 스토어에서 자동 주입)
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+
+  data:
+    redis:
+      # Host, Port는 docker-compose나 EB 변수에서 받음 (보안 중요도 낮음)
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      # password 삭제됨 (파라미터 스토어에서 자동 주입)
+
+  cloud:
+    aws:
+      s3:
+        bucket: ${S3_BUCKET}
+      region:
+        static: ap-northeast-2
+      credentials:
+        access-key: ${AWS_ACCESS_KEY_ID}
+        secret-key: ${AWS_SECRET_ACCESS_KEY}
+
+# jwt: 삭제됨 (파라미터 스토어에서 자동 주입)
+
+logging:
+  level:
+    org.springframework: INFO # 운영에서는 INFO 이상으로 하는 게 좋음
+    com.safely: INFO

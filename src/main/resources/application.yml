@@ -2,61 +2,18 @@ spring:
   application:
     name: safely
 
-  datasource:
-    url: jdbc:h2:mem:testdb
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
+  # 파일 업로드 용량 등 환경 무관 설정
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
 
+  # JPA 기본 설정 (DB 종류와 무관한 부분)
   jpa:
-    hibernate:
-      ddl-auto: create
-    defer-datasource-initialization: true  # Hibernate가 테이블을 다 만든 후에 data.sql을 실행하라는 뜻
+    open-in-view: false # 성능 최적화를 위해 false 권장
     properties:
       hibernate:
         format_sql: true
-    show-sql: true
 
-  sql:
-    init:
-      mode: always      # data.sql 실행
-#      schema-locations: classpath:old_schema.sql
-      data-locations: classpath:data.sql
-
-  data:
-    redis:
-      host: localhost
-      port: 6379
-      password: redis1234! # 개발 단계라서 하드코딩함. aws 배포 전 삭제 예정.
-
-  cloud:
-    aws:
-      s3:
-        bucket: ${S3_BUCKET}
-      region:
-        static: ap-northeast-2
-      credentials:
-        access-key: ${S3_ACCESS_KEY}
-        secret-key: ${S3_SECRET_KEY}
-
-    servlet:
-      multipart:
-        max-file-size: 10MB
-        max-request-size: 10MB
-
-#  main:
-#    allow-bean-definition-overriding: true  # 의존성 충돌이 나면 빈 덮어 씌우기 (swagger 최신버전으로 했다가 오류떠서 시도해 봄.)
-
-jwt:
-  secret-key: "your-very-long-jwt-secret-key-should-be-very-long" # 개발 단계 기본 비밀번호 이므로 GitHub에 그냥 올림.
-  access-token-expire-ms: 900000      # 15분
-  refresh-token-expire-ms: 604800000  # 7일
-
-logging:
-  level:
-    org.springframework.security: DEBUG
-    org.springframework.web: DEBUG
+# 기본적으로 dev 프로필을 활성화 (로컬에서 실행 시 자동 적용)
+spring.profiles.active: dev
