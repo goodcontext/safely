@@ -31,16 +31,6 @@ spring:
       port: ${REDIS_PORT}
       # password 삭제됨 (파라미터 스토어에서 자동 주입)
 
-  cloud:
-    aws:
-      s3:
-        bucket: ${S3_BUCKET}
-      region:
-        static: ap-northeast-2
-      credentials:
-        access-key: ${AWS_ACCESS_KEY_ID}
-        secret-key: ${AWS_SECRET_ACCESS_KEY}
-
 # jwt: 삭제됨 (파라미터 스토어에서 자동 주입)
 
 logging:
