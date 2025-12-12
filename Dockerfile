@@ -15,4 +15,4 @@ ENV SPRING_PROFILES_ACTIVE=prod
 ENTRYPOINT ["java", "-jar", "app.jar"]
 
 # 6. 포트 노출 (AWS EB가 이 포트로 트래픽을 보냄)
-EXPOSE 8080
+EXPOSE 5000
