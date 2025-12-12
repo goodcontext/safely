@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
-@Table(name = "group_members")
+@Table(name = "travel_group_members")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 // BaseEntity의 created_at 컬럼을 joined_at으로 이름 변경하여 매핑
 @AttributeOverride(name = "created_at", column = @Column(name = "joined_at", nullable = false, updatable = false))
