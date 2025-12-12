@@ -21,6 +21,7 @@ public class SecurityConfig {
 
     private final String[] authUrls = {
             "/",
+            "/health",
             "/api/auth/**",
             "/h2-console/**",
             "/v3/api-docs/**",
