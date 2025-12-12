@@ -15,5 +15,15 @@ spring:
       hibernate:
         format_sql: true
 
+  cloud:
+    aws:
+      s3:
+        bucket: ${S3_BUCKET}
+      region:
+        static: ap-northeast-2
+      credentials:
+        access-key: ${AWS_ACCESS_KEY_ID}
+        secret-key: ${AWS_SECRET_ACCESS_KEY}
+
 # 기본적으로 dev 프로필을 활성화 (로컬에서 실행 시 자동 적용)
 spring.profiles.active: dev
