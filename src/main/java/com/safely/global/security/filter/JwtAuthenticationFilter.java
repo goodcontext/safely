@@ -30,6 +30,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String[] whiteList = {
                 "/",
+                "/health",
                 "/api/auth/**",
                 "/h2-console/**",
                 "/swagger-ui/**",
