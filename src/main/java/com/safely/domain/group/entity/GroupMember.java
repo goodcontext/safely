@@ -18,7 +18,7 @@ import lombok.NoArgsConstructor;
 public class GroupMember extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "group_members_id")
+    @Column(name = "group_member_id")
     private Long id;
 
     // 지연 로딩 (LAZY) 사용하는 이유
