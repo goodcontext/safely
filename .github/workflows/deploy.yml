@@ -68,8 +68,8 @@ jobs:
           APP_NAME: safely-app
           ENV_NAME: Safely-app-env
           REGION: ap-northeast-2
-          # github.run_number를 추가하여 재실행 시에도 고유한 값이 되도록 변경
-          VERSION_LABEL: ver-${{ github.sha }}-${{ github.run_number }}
+          # 깃허브 액션에서 rerun 눌렀을 때도 버전레이블 중복 없이 배포 성공할 수 있도록 github.run_number, github.run_attempt 추가
+          VERSION_LABEL: ver-${{ github.sha }}-${{ github.run_number }}-${{ github.run_attempt }}
           EB_BUCKET: elasticbeanstalk-ap-northeast-2-136022486037
         run: |          
           aws s3 cp deploy.zip s3://$EB_BUCKET/$APP_NAME/$VERSION_LABEL.zip --region $REGION
