@@ -13,28 +13,26 @@ services:
       # [Redis 설정] 'redis' 서비스 컨테이너와 연결
       REDIS_HOST: redis
       REDIS_PORT: 6379
-#      REDIS_PASSWORD: ${REDIS_PASSWORD} # AWS 파라미터 스토어에 spring.data.redis.password 등록되어 있어서 필요 없음.
+#      REDIS_PASSWORD: ${REDIS_PASSWORD} # AWS 파라미터 스토어에 spring.data.redis.password 등록되어 있어서 주석 처리함.
 
-      # [AWS EB 환경변수 주입]
-      # 실제 값은 AWS Elastic Beanstalk 콘솔에서 설정한 값이 들어옵니다.
-#      RDS_HOSTNAME: ${RDS_HOSTNAME} # AWS 파라미터 스토어에 등록되어 있어서 필요 없음.
-#      RDS_PORT: ${RDS_PORT} # AWS 파라미터 스토어에 등록되어 있어서 필요 없음.
-#      RDS_DB_NAME: ${RDS_DB_NAME} # AWS 파라미터 스토어에 등록되어 있어서 필요 없음.
-#      RDS_USERNAME: ${RDS_USERNAME} # AWS 파라미터 스토어에 spring.datasource.username 등록되어 있어서 필요 없음.
-#      RDS_PASSWORD: ${RDS_PASSWORD} # AWS 파라미터 스토어에 spring.datasource.password 등록되어 있어서 필요 없음.
+#      RDS DB URL은 AWS 파라미터 스토어에 spring.datasource.url 등록되어 있음.
+#      RDS_USERNAME: ${RDS_USERNAME} # AWS 파라미터 스토어에 spring.datasource.username 등록되어 있어서 주석 처리함.
+#      RDS_PASSWORD: ${RDS_PASSWORD} # AWS 파라미터 스토어에 spring.datasource.password 등록되어 있어서 주석 처리함.
 
-#      S3_BUCKET: ${S3_BUCKET} # AWS 파라미터 스토어에 등록되어 있어서 필요 없음.
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID} # EB 환경 변수에 저장해야 함.
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY} # 금고 열쇠를 금고 안에 넣을 수는 없으니까 EB 환경변수에 평문 형태로 저장함.
-      AWS_REGION: ${AWS_REGION} # EB 환경 변수에 저장해야 함.
+#      S3_BUCKET: ${S3_BUCKET} # AWS 파라미터 스토어에 등록되어 있어서 주석 처리함.
+#      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID} # AWS OIDC 방식으로 임시 토큰 발급받아 접속하므로 주석 처리함.
+#      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY} # AWS OIDC 방식으로 임시 토큰 발급받아 접속하므로 주석 처리함.
+      AWS_REGION: ${AWS_REGION:-ap-northeast-2} # ${VAR:-default} 문법으로 기본값을 지정
 
-#      JWT_SECRET_KEY: ${JWT_SECRET_KEY} # AWS 파라미터 스토어에 jwt.secret-key 등록되어 있어서 필요 없음.
+#      JWT_SECRET_KEY: ${JWT_SECRET_KEY} # AWS 파라미터 스토어에 jwt.secret-key 등록되어 있어서 주석 처리함.
     depends_on:
-      - redis                   # redis가 먼저 켜져야 앱이 실행됨
+      - redis                   # redis가 먼저 켜져야 앱이 실행됨.
 
   # 2. Redis 서버 (Sidecar)
   redis:
     image: redis:alpine         # 가볍고 안정적인 알파인 리눅스 기반 Redis 이미지
-    command: redis-server --requirepass ${REDIS_PASSWORD} # 이 구문 때문에 REDIS_PASSWORD는 EB 환경변수에 따로 등록해야 함.
+    command: redis-server
+         # 사이드카로 컨테이너 두 개 띄운 뒤에 같은 도커 네트워크 안에서 로컬로 접속하니까 보안은 비번 없이 네트워크 격리로 충분할 때가 많음.
+         # 6379포트만 외부 접속 막아야 함. (AWS 보안그룹에서 6379 포트 인바운드 막아야 함.)
     ports:
       - "6379:6379"             # 내부 통신용 (외부 노출은 보안 그룹으로 막힘)
