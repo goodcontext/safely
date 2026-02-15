@@ -16,7 +16,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: create-drop # 껐다 켜면 데이터 초기화
+      ddl-auto: create-drop
     show-sql: true
     defer-datasource-initialization: true
 
@@ -29,12 +29,19 @@ spring:
     redis:
       host: localhost
       port: 6379
-      password: redis1234! # 로컬용 비밀번호
+      password: redis1234!
+
+  # 로컬 개발 환경에서만 Access Key 사용. prod 환경은 OIDC 임시 토큰 발급받는 방식으로 사용
+  cloud:
+    aws:
+      credentials:
+        access-key: ${AWS_ACCESS_KEY_ID}
+        secret-key: ${AWS_SECRET_ACCESS_KEY}
 
 jwt:
-  secret-key: "your-very-long-jwt-secret-key-local-dev-only" # 로컬용 키
-  access-token-expire-ms: 900000 # 15분
-  refresh-token-expire-ms: 604800000 # 7일
+  secret-key: "your-very-long-jwt-secret-key-local-dev-only"
+  access-token-expire-ms: 900000
+  refresh-token-expire-ms: 604800000
 
 logging:
   level:
