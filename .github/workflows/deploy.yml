@@ -70,9 +70,7 @@ jobs:
           REGION: ap-northeast-2
           VERSION_LABEL: ver-${{ github.sha }}
           EB_BUCKET: elasticbeanstalk-ap-northeast-2-136022486037
-        run: |
-          aws s3 ls "s3://$EB_BUCKET" --region $REGION
-          
+        run: |          
           aws s3 cp deploy.zip s3://$EB_BUCKET/$APP_NAME/$VERSION_LABEL.zip --region $REGION
           
           aws elasticbeanstalk create-application-version \
