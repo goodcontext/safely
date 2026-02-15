@@ -4,6 +4,10 @@ on:
   push:
     branches: [ "main" ]
 
+permissions:
+  id-token: write   # OIDC 사용 시 필수적인 구문임.
+  contents: read
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -18,9 +22,6 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-
-      # application-prod.yml 같은 파일이 git에 없다면 여기서 생성해주는 단계가 필요할 수 있음
-      # 하지만 위에서 변수 처리(${...}) 했으므로 파일만 있으면 됨.
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
@@ -44,13 +45,18 @@ jobs:
         # 여기서는 "소스 코드 + Dockerfile"을 넘겨서 EB가 "docker build"를 하게 만드는 방식입니다.
         # 따라서 ./gradlew build로 생긴 jar 파일도 zip에 포함되어야 Dockerfile의 COPY 명령어가 작동합니다.
 
+      # GitHub Action에서 Access Key 없이 바로 AWS로 OIDC 임시토큰 발급받아서 접속함.
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::136022486037:role/github-actions-oidc-eb-deploy
+          aws-region: ap-northeast-2
+
       - name: Deploy to Elastic Beanstalk
         uses: einaregilsson/beanstalk-deploy@v21
         with:
-          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           application_name: safely-app          # AWS EB 앱 이름
           environment_name: Safely-app-env       # AWS EB 환경 이름
           version_label: "ver-${{ github.sha }}"
-          region: ${{ secrets.AWS_REGION }}
+          region: ap-northeast-2
           deployment_package: deploy.zip

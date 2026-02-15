@@ -13,8 +13,7 @@ spring:
     name: safely
 
   datasource:
-    # URL은 환경변수 조각들을 모아서 완성 (파라미터 스토어 X)
-    url: jdbc:mysql://${RDS_HOSTNAME}:${RDS_PORT}/${RDS_DB_NAME}?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    # url 삭제됨 (파라미터 스토어에서 자동 주입)
     driver-class-name: com.mysql.cj.jdbc.Driver
     # username 삭제됨 (파라미터 스토어에서 자동 주입)
     # password 삭제됨 (파라미터 스토어에서 자동 주입)
@@ -26,10 +25,10 @@ spring:
 
   data:
     redis:
-      # Host, Port는 docker-compose나 EB 변수에서 받음 (보안 중요도 낮음)
+      # Host, Port는 docker-compose.yml에서 받음
       host: ${REDIS_HOST}
       port: ${REDIS_PORT}
-      # password 삭제됨 (파라미터 스토어에서 자동 주입)
+      # password 삭제됨(redis 서버는 도커 컨테이너로 사이드카 방식을 사용하므로 REDIS PORT로의 외부 접속만 차단하면 되어서 비번 삭제함)
 
 # jwt: 삭제됨 (파라미터 스토어에서 자동 주입)
 
