@@ -8,6 +8,7 @@ import com.safely.domain.group.repository.GroupMemberRepository;
 import com.safely.domain.group.repository.GroupRepository;
 import com.safely.domain.member.entity.Member;
 import com.safely.domain.member.repository.MemberRepository;
+import com.safely.global.exception.NotFoundException;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -57,7 +58,7 @@ class GroupServiceIntegrationTest {
         // 2. When
         Long groupId = groupService.createGroup(member.getId(), request);
 
-        // 영속성 컨텍스트 초기화 (DB 재조회)
+        // 영속성 컨텍스트 초기화 (DB 반영 및 캐시 삭제)
         em.flush();
         em.clear();
 
@@ -65,19 +66,20 @@ class GroupServiceIntegrationTest {
         Group savedGroup = groupRepository.findById(groupId).orElseThrow();
         assertThat(savedGroup.getName()).isEqualTo("제주도 여행");
 
-        List<GroupMember> members = groupMemberRepository.findAll();
+        List<GroupMember> members = groupMemberRepository.findByGroup(savedGroup);
         assertThat(members).hasSize(1);
 
         GroupMember manager = members.get(0);
         assertThat(manager.getRole()).isEqualTo(GroupRole.MANAGER);
         assertThat(manager.getCreatedAt()).isNotNull(); // Auditing 확인
+        assertThat(manager.getMember().getId()).isEqualTo(member.getId());
     }
 
     @Test
     @DisplayName("실패: 존재하지 않는 회원이 그룹을 생성하려 하면 예외가 발생한다.")
     void createGroup_Fail_MemberNotFound() {
         // 1. Given
-        Long invalidMemberId = 999999L; // DB에 없을 법한 ID
+        Long invalidMemberId = 999999L;
 
         GroupCreateRequest request = GroupCreateRequest.builder()
                 .name("유령 여행")
@@ -85,11 +87,9 @@ class GroupServiceIntegrationTest {
                 .endDate(LocalDate.now().plusDays(1))
                 .build();
 
-        // 2. When & Then (예외 발생 검증)
-        // Service 로직: .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
+        // 2. When & Then
         assertThatThrownBy(() -> groupService.createGroup(invalidMemberId, request))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("존재하지 않는 회원입니다.");
+                .isInstanceOf(NotFoundException.class); // 예외 타입 변경
     }
 
     @Test

@@ -29,13 +29,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
-// ★ 핵심 수정 2가지:
-// 1. spring.data.redis.repositories.enabled=false (Redis Repository 끄기)
-// 2. spring.jpa.defer-datasource-initialization=true (테이블 생성 후 data.sql 실행하기)
-@SpringBootTest(properties = {
-        "spring.data.redis.repositories.enabled=false",
-        "spring.jpa.defer-datasource-initialization=true"
-})
+@SpringBootTest
 @Transactional
 class AuthServiceIntegrationTest {
 

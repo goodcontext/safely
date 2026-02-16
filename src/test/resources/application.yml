@@ -1,0 +1,62 @@
+spring:
+  application:
+    name: safely-test
+
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    # Hibernate가 테이블을 만든 후에 data.sql을 실행하도록 지연 설정
+    defer-datasource-initialization: true
+    open-in-view: false
+
+  # 데이터 초기화 (data.sql 실행)
+  sql:
+    init:
+      mode: always
+
+  # Redis 설정 (테스트에서는 리포지토리 비활성화)
+  data:
+    redis:
+      repositories:
+        enabled: false
+      host: localhost
+      port: 6379
+      password: redis1234!
+
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+  # 가짜 AWS 설정 (S3_BUCKET 오류 및 빈 생성 실패 해결)
+  cloud:
+    aws:
+      s3:
+        bucket: test-bucket-dummy # ${S3_BUCKET} 대신 고정값 사용
+      region:
+        static: ap-northeast-2
+      credentials:
+        access-key: test-access-key # ${AWS_ACCESS_KEY_ID} 대신 고정값
+        secret-key: test-secret-key # ${AWS_SECRET_ACCESS_KEY} 대신 고정값
+      stack:
+        auto: false # CloudFormation 스택 자동 조회 비활성화 (속도 향상)
+
+# JWT 설정 (NullPointerException 해결)
+# application-dev.yml에만 있던 설정을 테스트에도 가져옴
+jwt:
+  secret-key: "test-very-long-secret-key-for-unit-tests-must-be-secure"
+  access-token-expire-ms: 6000 # 10분
+  refresh-token-expire-ms: 1200000 # 20분
+
+# 로깅 설정
+logging:
+  level:
+    com.safely: DEBUG
+    org.springframework: INFO
