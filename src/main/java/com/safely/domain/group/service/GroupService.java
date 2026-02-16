@@ -42,12 +42,12 @@ public class GroupService {
     }
 
     // 2. 내 그룹 목록 조회
+    @Transactional(readOnly = true) // readOnly = true는 조회 전용이므로 성능 향상
     public List<GroupResponse> getMyGroups(Long memberId) {
-        // 내가 속한 GroupMember 리스트를 통해 Group을 가져옴 (N+1 문제 주의: fetch join 필요하지만 일단 기능 구현 우선)
-        // 실제로는 repository에 findGroupsByMemberId 같은 메서드를 만드는 것이 좋음.
-        // 현재 로직: GroupMember -> Group 접근
-        return groupMemberRepository.findAll().stream() // 임시: 전체 조회 후 필터링 (성능 최적화 필요)
-                .filter(gm -> gm.getMember().getId().equals(memberId))
+        List<GroupMember> myGroupMembers = groupMemberRepository.findAllByMemberIdWithGroup(memberId);
+
+        // stream()은 빈 리스트를 받으면 아무일도 하지 않고 빈 리스트를 반환함. 따라서 null값 체크할 필요 없음.
+        return myGroupMembers.stream()
                 .map(gm -> GroupResponse.from(gm.getGroup()))
                 .toList();
     }
@@ -89,11 +89,7 @@ public class GroupService {
     public void joinGroupByCode(Long memberId, String inviteCode) {
         Member member = getMember(memberId);
 
-        // 초대 코드로 그룹 찾기 (Repository에 findByInviteCode 추가 필요)
-        // 여기서는 임시로 전체 검색 (성능상 나중에 QueryDSL이나 메서드 쿼리로 변경해야 함)
-        Group group = groupRepository.findAll().stream()
-                .filter(g -> inviteCode.equals(g.getInviteCode()))
-                .findFirst()
+        Group group = groupRepository.findByInviteCode(inviteCode)
                 .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 초대 코드입니다."));
 
         // 이미 가입된 멤버인지 확인
@@ -124,17 +120,22 @@ public class GroupService {
     }
 
     private void validateMemberInGroup(Long groupId, Long memberId) {
-        boolean isMember = groupMemberRepository.findAll().stream()
-                .anyMatch(gm -> gm.getGroup().getId().equals(groupId) && gm.getMember().getId().equals(memberId));
-        if (!isMember) throw new IllegalArgumentException("해당 그룹의 멤버가 아닙니다.");
+        // existsBy 메서드를 사용하므로 O(log N)의 속도로 DB에서 인덱스를 타고 존재 여부만 0.01초 만에 확인
+        // 참고로 findAll로 찾으면 O(N)의 속도임. O(N) -> 데이터가 많아지면 그만큼 시간도 늘어남.
+        // O(1) : 1건 조회 (가장 빠름)
+        // O(Log N) 이분검색으로 조회, 시간 약간 늘어남. 인덱스 조회일 때 걸리는 시간임. (두 번째로 빠름)
+        // O(N) : 100만 건 검색 시 100만 번 조회. Full Table Scan 시 걸리는 시간임. (느림)
+        // O(N^2) : for문 이중 루프 시 걸리는 시간 (최악)
+        if (!groupMemberRepository.existsByGroupIdAndMemberId(groupId, memberId)) {
+            throw new IllegalArgumentException("해당 그룹의 멤버가 아닙니다."); // 또는 권한 없음 예외
+        }
     }
 
     private void validateManager(Long groupId, Long memberId) {
-        GroupMember gm = groupMemberRepository.findAll().stream()
-                .filter(m -> m.getGroup().getId().equals(groupId) && m.getMember().getId().equals(memberId))
-                .findFirst()
+        GroupMember gm = groupMemberRepository.findByGroupIdAndMemberId(groupId, memberId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 그룹의 멤버가 아닙니다."));
 
+        // 관리자 권한 체크
         if (gm.getRole() != GroupRole.MANAGER) {
             throw new IllegalArgumentException("그룹 관리자만 수행할 수 있습니다.");
         }

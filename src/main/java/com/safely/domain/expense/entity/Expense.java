@@ -32,6 +32,9 @@ public class Expense extends BaseEntity {
     @JoinColumn(name = "payer_id", nullable = false)
     private Member payer; // 결제자 (실제 돈을 낸 사람)
 
+    @Version
+    private Long version; // @Transactional로는 동시 수정 충돌을 감지할 수 없으므로 낙관적 락(@Version) 기능을 추가함.
+
     @Column(nullable = false)
     private Long amount; // 총 지출 금액
 
