@@ -8,6 +8,7 @@ import com.safely.domain.group.repository.GroupMemberRepository;
 import com.safely.domain.group.repository.GroupRepository;
 import com.safely.domain.member.entity.Member;
 import com.safely.domain.member.repository.MemberRepository;
+import com.safely.global.exception.NotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -90,8 +91,8 @@ class GroupServiceUnitTest {
 
         // 2. When & Then (예외 발생 확인)
         assertThatThrownBy(() -> groupService.createGroup(invalidMemberId, request))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("존재하지 않는 회원입니다.");
+                .isInstanceOf(NotFoundException.class); // [수정] IllegalArgumentException -> NotFoundException
+        // .hasMessage("존재하지 않는 회원입니다."); // [삭제] NotFoundException은 별도 메시지가 없으므로 제거
 
         // Verify: 예외가 발생했으므로 그룹 저장은 호출되면 안 됨.
         verify(groupRepository, times(0)).save(any());

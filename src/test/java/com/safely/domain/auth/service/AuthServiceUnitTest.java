@@ -54,14 +54,14 @@ class AuthServiceUnitTest {
         SignupRequest request = new SignupRequest("test@email.com", "1234", "테스터");
 
         // Mock: 이메일 중복 아님
-        given(memberRepository.existsByEmail(request.getEmail())).willReturn(false);
+        given(memberRepository.existsByEmail(request.email())).willReturn(false);
         // Mock: 비번 암호화
-        given(passwordEncoder.encode(request.getPassword())).willReturn("encodedPw");
+        given(passwordEncoder.encode(request.password())).willReturn("encodedPw");
         // Mock: 저장 후 반환할 객체
         Member savedMember = Member.builder()
                 .id(1L)
-                .email(request.getEmail())
-                .name(request.getName())
+                .email(request.email())
+                .name(request.name())
                 .build();
         given(memberRepository.save(any(Member.class))).willReturn(savedMember);
 
@@ -69,8 +69,8 @@ class AuthServiceUnitTest {
         SignupResponse response = authService.signup(request);
 
         // Then
-        assertThat(response.email()).isEqualTo(request.getEmail());
-        assertThat(response.name()).isEqualTo(request.getName());
+        assertThat(response.email()).isEqualTo(request.email());
+        assertThat(response.name()).isEqualTo(request.name());
 
         // Verify: save 메서드가 1번 호출되었는지 확인
         verify(memberRepository, times(1)).save(any(Member.class));
@@ -83,7 +83,7 @@ class AuthServiceUnitTest {
         SignupRequest request = new SignupRequest("duplicate@email.com", "1234", "중복자");
 
         // Mock: 이메일 중복임 (true)
-        given(memberRepository.existsByEmail(request.getEmail())).willReturn(true);
+        given(memberRepository.existsByEmail(request.email())).willReturn(true);
 
         // When & Then
         assertThatThrownBy(() -> authService.signup(request))
