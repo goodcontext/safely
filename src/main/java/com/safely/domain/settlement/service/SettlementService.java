@@ -94,9 +94,8 @@ public class SettlementService {
 
     // 헬퍼 메서드
     private List<GroupMember> findGroupMembers(Long groupId) {
-        return groupMemberRepository.findAll().stream()
-                .filter(gm -> gm.getGroup().getId().equals(groupId))
-                .toList();
+        // 그룹 멤버 + 회원 정보(이름, 이메일 등)를 한 방 쿼리로 가져옴. (N+1문제 방지)
+        return groupMemberRepository.findAllByGroupIdWithMember(groupId);
     }
 
     // 정산 알고리즘 (핵심)
