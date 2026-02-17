@@ -59,6 +59,7 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 );
 
+        // 화이트 리스트는 JwtAuthenticationFilter 클래스의 shouldNotFilter() 메서드에 적용되어 있음. (중복 관리 방지)
         http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(authUrls).permitAll()

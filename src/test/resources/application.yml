@@ -26,7 +26,6 @@ spring:
         enabled: false
       host: localhost
       port: 6379
-      password: redis1234!
 
   servlet:
     multipart:
