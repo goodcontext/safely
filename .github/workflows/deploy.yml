@@ -29,7 +29,6 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew clean build -x test
         # 테스트 실패 시 배포 중단을 원하면 -x test 제거.
-        # 현재 Redis가 없어서 테스트 실패 가능성이 있으므로 일단 스킵(-x test) 권장.
 
       # --- [CD 구간] ---
       - name: Generate deployment package
@@ -44,12 +43,6 @@ jobs:
 
       - name: Check deploy.zip content # deploy.zip 파일 제대로 생성되었는지 테스트 하는 구문임
         run: unzip -l deploy.zip | head -n 50
-
-        # [중요 수정] AWS EB Docker 플랫폼은 기본적으로
-        # 1. Dockerfile이 있으면 -> Docker build 수행
-        # 2. docker-compose.yml이 있으면 -> Compose 수행
-        # 여기서는 "소스 코드 + Dockerfile"을 넘겨서 EB가 "docker build"를 하게 만드는 방식입니다.
-        # 따라서 ./gradlew build로 생긴 jar 파일도 zip에 포함되어야 Dockerfile의 COPY 명령어가 작동합니다.
 
       # GitHub Action에서 Access Key 없이 바로 AWS로 OIDC 임시토큰 발급받아서 접속함.
       - name: Configure AWS credentials (OIDC)

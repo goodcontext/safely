@@ -42,7 +42,15 @@ dependencies {
     implementation 'io.awspring.cloud:spring-cloud-aws-starter-s3:3.4.1'
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14'
     implementation 'io.awspring.cloud:spring-cloud-aws-starter-parameter-store'
-	compileOnly 'org.projectlombok:lombok'
+
+    // 두 명의 유저가 동시에 지출 내역을 수정하려고 할 때 충돌이 발생하면, AOP 기반으로 2~3회 재시도하기 위하여 추가함.
+    implementation 'org.springframework.retry:spring-retry'
+    implementation 'org.springframework:spring-aspects'
+
+    // AOP 기능을 위한 스타터 추가
+    implementation 'org.springframework.boot:spring-boot-starter-aop'
+
+    compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'com.h2database:h2'
 	runtimeOnly 'com.mysql:mysql-connector-j'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.13.0'

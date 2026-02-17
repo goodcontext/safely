@@ -8,6 +8,8 @@ import com.safely.domain.group.repository.GroupMemberRepository;
 import com.safely.domain.group.repository.GroupRepository;
 import com.safely.domain.member.entity.Member;
 import com.safely.domain.member.repository.MemberRepository;
+import com.safely.global.exception.common.EntityNotFoundException;
+import com.safely.global.exception.group.InvalidInviteCodeException;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -39,7 +41,7 @@ class GroupServiceIntegrationTest {
     @Test
     @DisplayName("통합: 그룹 생성 시 멤버가 MANAGER로 등록되고 날짜가 저장된다.")
     void createGroup_Integration() {
-        // 1. Given
+        // Given
         Member member = memberRepository.save(Member.builder()
                 .email("maker@safely.com")
                 .password("1234")
@@ -54,30 +56,31 @@ class GroupServiceIntegrationTest {
                 .destination("Jeju")
                 .build();
 
-        // 2. When
+        // When
         Long groupId = groupService.createGroup(member.getId(), request);
 
-        // 영속성 컨텍스트 초기화 (DB 재조회)
+        // 영속성 컨텍스트 초기화 (DB 반영 및 캐시 삭제)
         em.flush();
         em.clear();
 
-        // 3. Then
+        // Then
         Group savedGroup = groupRepository.findById(groupId).orElseThrow();
         assertThat(savedGroup.getName()).isEqualTo("제주도 여행");
 
-        List<GroupMember> members = groupMemberRepository.findAll();
+        List<GroupMember> members = groupMemberRepository.findByGroup(savedGroup);
         assertThat(members).hasSize(1);
 
         GroupMember manager = members.get(0);
         assertThat(manager.getRole()).isEqualTo(GroupRole.MANAGER);
         assertThat(manager.getCreatedAt()).isNotNull(); // Auditing 확인
+        assertThat(manager.getMember().getId()).isEqualTo(member.getId());
     }
 
     @Test
     @DisplayName("실패: 존재하지 않는 회원이 그룹을 생성하려 하면 예외가 발생한다.")
     void createGroup_Fail_MemberNotFound() {
-        // 1. Given
-        Long invalidMemberId = 999999L; // DB에 없을 법한 ID
+        // Given
+        Long invalidMemberId = 999999L;
 
         GroupCreateRequest request = GroupCreateRequest.builder()
                 .name("유령 여행")
@@ -85,17 +88,15 @@ class GroupServiceIntegrationTest {
                 .endDate(LocalDate.now().plusDays(1))
                 .build();
 
-        // 2. When & Then (예외 발생 검증)
-        // Service 로직: .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
+        // When & Then
         assertThatThrownBy(() -> groupService.createGroup(invalidMemberId, request))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("존재하지 않는 회원입니다.");
+                .isInstanceOf(EntityNotFoundException.class); // 예외 타입 변경
     }
 
     @Test
     @DisplayName("실패: 그룹 이름 등 필수 데이터가 누락되면 DB 예외가 발생한다.")
     void createGroup_Fail_DataIntegrity() {
-        // 1. Given
+        // Given
         Member member = memberRepository.save(Member.builder()
                 .email("integrity@test.com")
                 .password("1234")
@@ -111,9 +112,42 @@ class GroupServiceIntegrationTest {
                 .endDate(LocalDate.now())
                 .build();
 
-        // 2. When & Then
+        // When & Then
         // 스프링 데이터 JPA는 DB 제약조건 위반 시 DataIntegrityViolationException을 던짐
         assertThatThrownBy(() -> groupService.createGroup(member.getId(), badRequest))
                 .isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
+    }
+
+    @Test
+    @DisplayName("그룹 가입 성공: 유효한 초대 코드로 가입하면 GroupMember가 생성된다.")
+    void joinGroupByCode_Success() {
+        // 방장과 그룹 생성
+        Member owner = memberRepository.save(Member.builder().email("owner@a.com").password("1").name("방장").authority("USER").build());
+        Long groupId = groupService.createGroup(owner.getId(), new GroupCreateRequest("테스트그룹", LocalDate.now(), LocalDate.now(), "Seoul"));
+
+        Group group = groupRepository.findById(groupId).orElseThrow();
+        String inviteCode = group.getInviteCode();
+
+        // 가입할 새로운 유저 생성
+        Member joiner = memberRepository.save(Member.builder().email("joiner@a.com").password("1").name("참여자").authority("USER").build());
+
+        // 가입 요청
+        groupService.joinGroupByCode(joiner.getId(), inviteCode);
+
+        // 검증
+        em.flush();
+        em.clear();
+
+        boolean isMember = groupMemberRepository.existsByGroupIdAndMemberId(groupId, joiner.getId());
+        assertThat(isMember).isTrue();
+    }
+
+    @Test
+    @DisplayName("그룹 가입 실패: 초대 코드가 틀리면 InvalidInviteCodeException 발생")
+    void joinGroupByCode_Fail_InvalidCode() {
+        Member member = memberRepository.save(Member.builder().email("wrong@a.com").password("1").name("멤버").authority("USER").build());
+
+        assertThatThrownBy(() -> groupService.joinGroupByCode(member.getId(), "INVALID_CODE"))
+                .isInstanceOf(InvalidInviteCodeException.class);
     }
 }

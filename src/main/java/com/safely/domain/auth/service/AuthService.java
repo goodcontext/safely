@@ -2,6 +2,12 @@ package com.safely.domain.auth.service;
 
 import com.safely.domain.auth.dto.*;
 import com.safely.domain.auth.entity.CustomUserDetails;
+import com.safely.global.exception.BusinessException;
+import com.safely.global.exception.ErrorCode;
+import com.safely.global.exception.auth.EmailDuplicateException;
+import com.safely.global.exception.auth.InvalidTokenException;
+import com.safely.global.exception.auth.RefreshTokenNotFoundException;
+import com.safely.global.exception.common.EntityNotFoundException;
 import com.safely.global.security.jwt.JwtProvider;
 import com.safely.domain.member.entity.Member;
 import com.safely.domain.member.repository.MemberRepository;
@@ -17,9 +23,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final MemberRepository memberRepository;
@@ -28,6 +34,8 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
 
     public TokenResponse login(LoginRequest request) {
+        log.info("[*] 로그인 시도: Email={}", request.email());
+
         Authentication authentication =
                 authenticationManager.authenticate(
                         new UsernamePasswordAuthenticationToken(
@@ -61,6 +69,7 @@ public class AuthService {
                 .set(key, refreshToken, expireMs,
                         TimeUnit.MILLISECONDS);
 
+        log.info("[+] 로그인 성공 및 토큰 발급 완료: MemberID={}", member.getId());
         return new TokenResponse(accessToken, refreshToken);
     }
 
@@ -68,7 +77,8 @@ public class AuthService {
 
         // 이메일 중복 체크
         if (memberRepository.existsByEmail(request.email())) {
-            throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+            log.warn("[!] 회원가입 실패: 이미 존재하는 이메일입니다. Email: {}", request.email());
+            throw new EmailDuplicateException();
         }
 
         // 비밀번호 암호화
@@ -87,8 +97,10 @@ public class AuthService {
 
         try {
             saved = memberRepository.save(member);
+            log.info("[+] 회원가입 성공: MemberID={}, Email={}", saved.getId(), saved.getEmail());
         } catch (Exception e) {
-            throw new RuntimeException("회원 저장중 오류가 발생했습니다.", e);
+            log.error("[-] 회원가입 중 DB 저장 실패. Email={}, Cause={}", request.email(), e.getMessage());
+            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
 
         return SignupResponse.from(saved);
@@ -98,7 +110,8 @@ public class AuthService {
         String refreshToken = request.refreshToken();
 
         if (!jwtProvider.validateToken(refreshToken)) {
-            throw new RuntimeException("잘못된 리프레시 토큰입니다.");
+            log.warn("[!] 토큰 재발급 실패: 유효하지 않은 리프레시 토큰");
+            throw new InvalidTokenException();
         }
 
         Long userId =
@@ -110,15 +123,15 @@ public class AuthService {
 
         if (storedRefreshToken == null
                 || !storedRefreshToken.equals(refreshToken)) {
-            throw new RuntimeException(
-                    "리프레시 토큰이 만료되었거나 일치하지 않습니다."
-            );
+            log.warn("[!] 토큰 재발급 실패: Redis 내 토큰 불일치. MemberID={}", userId);
+            throw new RefreshTokenNotFoundException();
         }
 
         Member member = memberRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException(
-                        "사용자를 찾을 수 없습니다."
-                ));
+                .orElseThrow(() -> {
+                    log.error("[-] 토큰 재발급 중 사용자 조회 실패. MemberID={}", userId);
+                    return new EntityNotFoundException(ErrorCode.MEMBER_NOT_FOUND);
+                });
 
         String newAccessToken =
                 jwtProvider.generateAccessToken(
@@ -139,6 +152,7 @@ public class AuthService {
                 .set(key, newRefreshToken, expireMs,
                         TimeUnit.MILLISECONDS);
 
+        log.info("[*] 토큰 재발급 완료: MemberID={}", member.getId());
         return new TokenResponse(
                 newAccessToken,
                 newRefreshToken
@@ -148,6 +162,7 @@ public class AuthService {
     public void logout(String accessToken) {
 
         if (!jwtProvider.validateToken(accessToken)) {
+            log.warn("[!] 로그아웃 실패: 유효하지 않은 액세스 토큰 요청");
             return;
         }
 
@@ -168,5 +183,7 @@ public class AuthService {
         // refresh 토큰 삭제
         String key = "refresh:" + userId;
         redisTemplate.delete(key);
+
+        log.info("[-] 로그아웃 처리 완료 (Redis 블랙리스트 등록): MemberID={}", userId);
     }
 }

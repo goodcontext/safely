@@ -1,6 +1,8 @@
 package com.safely.global.security.config;
 
 import com.safely.global.security.filter.JwtAuthenticationFilter;
+import com.safely.global.security.handler.CustomAccessDeniedHandler;
+import com.safely.global.security.handler.CustomAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,6 +20,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SecurityConfig {
     private final JwtAuthenticationFilter jwtFilter;
+    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
+    private final CustomAccessDeniedHandler customAccessDeniedHandler;
 
     private final String[] authUrls = {
             "/",
@@ -36,7 +40,6 @@ public class SecurityConfig {
         return configuration.getAuthenticationManager();
     }
 
-    // PasswordEncoder는 인터페이스이고, BCryptPasswordEncoder는 PasswordEncoder의 구현체이므로 이렇게 해도 정상작동함.
     @Bean
     public BCryptPasswordEncoder bCryptPasswordEncoder() {
         return new BCryptPasswordEncoder();
@@ -51,22 +54,27 @@ public class SecurityConfig {
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable);
 
-        // JWT를 사용하면 STATELESS를 반드시 명시하는 게 좋다고 함. (출처 : ChatGPT-5.1)
         http
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 );
 
+        // 화이트 리스트는 JwtAuthenticationFilter 클래스의 shouldNotFilter() 메서드에 적용되어 있음. (중복 관리 방지)
         http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(authUrls).permitAll()
                         .anyRequest().authenticated()
                 );
 
-        // h2-console에 접근할 때, localhost 접근이 거부되었습니다. 해결할 때 사용함. iframe 태그 사용 시 접근 허용 코드.
         http
                 .headers(headers -> headers
                         .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin)
+                );
+
+        http
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(customAuthenticationEntryPoint) // 인증 에러(401) 처리
+                        .accessDeniedHandler(customAccessDeniedHandler)          // 인가 에러(403) 처리
                 );
 
         http
