@@ -57,6 +57,73 @@ main - develop - feat 브랜치
 
 <img width="1530" height="812" alt="Safely_ERD_ver 3 0 0" src="https://github.com/user-attachments/assets/380eccd5-2e46-41b2-88e5-4a2b20047022" />
 
+## Technical Decision
+
+<details>
+<summary>Global Exception Handler (전역 예외 처리)</summary>
+
+[배경 및 문제점]  
+  - try-catch 구문을 사용하거나 일관되지 않은 방식으로 에러를 처리하면 여러 가지 단점이 있을 수 있습니다.
+  - (운영 효율, 트러블슈팅 효율, 프론트엔드 단과의 협업 효율 저하)
+
+
+[기술적 의사결정]
+  - 비즈니스 로직과 예외 처리 로직의 분리로 코드가 깔끔해집니다.
+  - 항상 동일한 구조의 JSON 응답을 받게 되므로 프론트엔드 단과의 협업 효율이 높아집니다.
+  - 알 수 없는 예외는 서버 500에러 메시지만 내보냄으로써 해커 등 외부인에게 불필요한 정보를 제공하지 않습니다.
+  - 일관된 에러 메시지를 제공하여 운영 시 트러블슈팅 시간을 단축할 수 있습니다.
+</details>  
+
+<details>
+<summary>AOP(Aspect-Oriented Programming) 기반 로깅</summary>
+
+[배경 및 문제점]  
+  - 로깅과 비즈니스 로직이 섞여 있으면 가독성이 떨어지게 되어 유지보수성이 나빠집니다.
+  - 로그에 기능을 추가해달라는 요청이 있을 때는 파일들을 일일이 수정하는 번거로움이 발생하게 됩니다.
+
+
+[기술적 의사결정]
+  - 로깅을 공통 관심사로 분리하여 비즈니스 로직에만 집중할 수 있도록 했습니다.
+  - 컨트롤러의 진입, 종료, 예외 발생 시간을 자동으로 기록하여 로그에 남길 수 있게 되어 있습니다.
+  - 실행 시간을 측정하여 성능 저하 지점을 쉽게 파악할 수 있습니다.
+</details>  
+
+<details>
+<summary>JWT 토큰 방식과 Redis 서버</summary>
+
+[배경 및 문제점]  
+  - 세션 방식은 서버 메모리 부하와 확장성 문제가 있어서 Stateless한 JWT 토큰 방식을 도입할 필요성이 있습니다.
+  - 하지만 JWT 토큰은 한 번 탈취되면 보안 위협이 크고, 로그아웃 처리가 까다롭다는 단점이 있습니다.
+
+
+[기술적 의사결정]
+  - RDB보다 조회 속도가 빠르고 TTL(Time To Live) 방식으로 관리가 쉬운 Redis에 Refresh 토큰 방식을 사용하면 토큰 탈취에 비교적 안전합니다.
+  - 사용자의 로그아웃 시 블랙리스트 방식을 사용하여, 남은 유효기간 동안 해당 Access Token의 재사용을 원천 차단했습니다.
+</details>
+  
+## Troubleshooting
+
+<details>
+<summary>MySQL 8.0 이상 버전에서 SQL 문법 오류 발생 해결</summary>
+
+[문제 상황]
+  - Group 엔티티 클래스의 테이블 명을 예약어 피하기 위하여 Groups로 지정했는데, 지속적 오류 발생했습니다.
+
+[원인 분석 및 해결]
+  - MySQL 8.0.2 버전부터 groups가 예약어로 추가된 사실을 확인했습니다.
+  - 테이블 명을 groups에서 travel_groups로 변경하여 해결했습니다.
+</details>  
+
+<details>
+<summary>로그인 주소 접근 시 403 오류 해결</summary>
+
+[문제 상황]
+  - SecurityConfig에서 로그인(`/api/auth/login`) 경로를 `.permitAll()`로 설정하여 접근을 허용했음에도 불구하고, 실제 요청 시 `403 Forbidden` 에러가 발생하여 로그인이 불가능한 현상이 발생했습니다.
+
+[원인 분석 및 해결]
+  - 로그인은 `POST` 방식이므로 `csrf` 필터가 동작하게 되어 `403 Forbidden` 오류가 떴습니다. `http.csrf(csrf -> csrf.disable());` 구문으로 `csrf` 필터 기능을 비활성화해서 해결했습니다.
+</details>  
+
 ## API 명세서
 
 ### 1. API Documentation
@@ -128,22 +195,22 @@ src
 │   │           ├─ domain
 │   │           │     ├ auth
 │   │           │     │   ├ controller
-│   │           │     │   │  └ AuthController.java
+│   │           │     │   │   └ AuthController.java
 │   │           │     │   ├ dto
-│   │           │     │   │  ├ LoginRequest.java
-│   │           │     │   │  ├ LoginResponse.java
-│   │           │     │   │  ├ RefreshTokenRequest.java
-│   │           │     │   │  ├ SignupRequest.java
-│   │           │     │   │  ├ SignupResponse.java
-│   │           │     │   │  └ TokenResponse.java
+│   │           │     │   │   ├ LoginRequest.java
+│   │           │     │   │   ├ LoginResponse.java
+│   │           │     │   │   ├ RefreshTokenRequest.java
+│   │           │     │   │   ├ SignupRequest.java
+│   │           │     │   │   ├ SignupResponse.java
+│   │           │     │   │   └ TokenResponse.java
 │   │           │     │   ├ entity
-│   │           │     │   │  └ CustomUserDetails.java
+│   │           │     │   │   └ CustomUserDetails.java
 │   │           │     │   └ service
-│   │           │     │      ├ AuthService.java
-│   │           │     │      └ CustomUserDetailsService.java
+│   │           │     │       ├ AuthService.java
+│   │           │     │       └ CustomUserDetailsService.java
 │   │           │     ├ common
 │   │           │     │   └ entity
-│   │           │     │      └ BaseEntity.java
+│   │           │     │       └ BaseEntity.java
 │   │           │     ├ expense
 │   │           │     │   ├ controller
 │   │           │     │   │   └ ExpenseController.java
@@ -151,7 +218,7 @@ src
 │   │           │     │   │   ├ ExpenseCreateRequest.java
 │   │           │     │   │   └ ExpenseResponse.java
 │   │           │     │   ├ entity
-│   │           │     │   │   ├ Expense
+│   │           │     │   │   ├ Expense.java
 │   │           │     │   │   └ ExpenseParticipant.java
 │   │           │     │   ├ repository
 │   │           │     │   │   └ ExpenseRepository.java
@@ -200,28 +267,54 @@ src
 │   │           │         └ service
 │   │           │             └ SettlementService.java
 │   │           ├ global
-│   │           │       ├ config
-│   │           │       │  ├ RedisConfig.java
-│   │           │       │  └ SwaggerConfig.java
-│   │           │       ├ controller
-│   │           │       │  └ HomeController.java
-│   │           │       ├ exception
-│   │           │       │  ├ GlobalExceptionHandler.java
-│   │           │       │  └ NotFoundException.java
-│   │           │       ├ s3
-│   │           │       │  └ S3Service.java
-│   │           │       └ security
-│   │           │          ├ config
-│   │           │          │    └ SecurityConfig.java
-│   │           │          ├ filter
-│   │           │          │    └ JwtAuthenticationFilter.java
-│   │           │          └ jwt
-│   │           │               ├ JwtProperties.java
-│   │           │               └ JwtProvider.java
+│   │           │     ├ config
+│   │           │     │   ├ LogAspect.java
+│   │           │     │   ├ RedisConfig.java
+│   │           │     │   └ SwaggerConfig.java
+│   │           │     ├ controller
+│   │           │     │   └ HomeController.java
+│   │           │     ├ exception
+│   │           │     │   ├ auth
+│   │           │     │   │   ├ EmailDuplicateException.java
+│   │           │     │   │   ├ InvalidTokenException.java
+│   │           │     │   │   ├ LoginFailedException.java
+│   │           │     │   │   ├ PasswordMismatchException.java
+│   │           │     │   │   └ RefreshTokenNotFoundException.java
+│   │           │     │   ├ common
+│   │           │     │   │   └ EntityNotFoundException.java
+│   │           │     │   ├ group
+│   │           │     │   │   ├ AlreadyJoinedGroupException.java
+│   │           │     │   │   ├ GroupPermissionDeniedException.java
+│   │           │     │   │   ├ InvalidInviteCodeException.java
+│   │           │     │   │   └ NotGroupMemberException.java
+│   │           │     │   ├ upload
+│   │           │     │   │   ├ FileUploadException.java
+│   │           │     │   │   └ InvalidFileExtensionException.java
+│   │           │     │   ├ BusinessException.java
+│   │           │     │   ├ ErrorCode.java
+│   │           │     │   ├ ErrorResponse.java
+│   │           │     │   └ GlobalExceptionHandler.java
+│   │           │     ├ s3
+│   │           │     │   └ S3Service.java
+│   │           │     └ security
+│   │           │         ├ config
+│   │           │         │   └ SecurityConfig.java
+│   │           │         ├ filter
+│   │           │         │   └ JwtAuthenticationFilter.java
+│   │           │         ├ handler
+│   │           │         │   ├ CustomAccessDeniedHandler.java
+│   │           │         │   └ CustomAuthenticationEntryPoint.java
+│   │           │         └ jwt
+│   │           │             ├ JwtProperties.java
+│   │           │             └ JwtProvider.java
 │   │           └ SafelyApplication.java
 │   └ resources
 │       ├ static
 │       │  └ images
+│       │       ├ Safely-디자인-시안.jpg
+│       │       ├ Safely_Backend_Skills.jpg
+│       │       ├ Safely_ERD_ver.3.0.0.jpg
+│       │       ├ Safely_System_Architecture.jpg
 │       │       ├ 더미_이미지_4MB.jpg
 │       │       └ 더미_이미지_300KB.jpg
 │       ├ templates
@@ -231,21 +324,26 @@ src
 │       ├ data.sql
 │       └ old_schema.sql
 └ test
-    └ java
-        └ com
-           └ safely
-                ├ domain
-                │    ├ auth
-                │    │   └ service
-                │    │        ├ AuthServiceIntegrationTest.java
-                │    │        └ AuthServiceUnitTest.java
-                │    └ group
-                │         ├ entity
-                │         │   └ GroupEntityUnitTest.java
-                │         └ service
-                │             ├ GroupServiceIntegrationTest.java
-                │             └ GroupServiceUnitTest.java
-                └ SafelyApplicationTests.java
+    ├ java
+    │   └ com
+    │      └ safely
+    │           ├ domain
+    │           │     ├ auth
+    │           │     │   └ service
+    │           │     │       ├ AuthServiceIntegrationTest.java
+    │           │     │       └ AuthServiceUnitTest.java
+    │           │     ├ expense
+    │           │     │   └ service
+    │           │     │       └ ExpenseServiceConcurrencyTest.java
+    │           │     └ group
+    │           │         ├ entity
+    │           │         │   └ GroupEntityUnitTest.java
+    │           │         └ service
+    │           │             ├ GroupServiceIntegrationTest.java
+    │           │             └ GroupServiceUnitTest.java
+    │           └ SafelyApplicationTests.java
+    └ resources
+        └ application.yml
 .gitattributes
 .gitignore
 build.gradle
