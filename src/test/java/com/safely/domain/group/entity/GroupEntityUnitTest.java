@@ -27,6 +27,27 @@ class GroupEntityUnitTest {
     }
 
     @Test
+    @DisplayName("Group 정보 수정이 정상적으로 반영된다.")
+    void groupUpdateTest() {
+        // Given
+        Group group = Group.builder()
+                .name("기존 이름")
+                .startDate(LocalDate.of(2025, 1, 1))
+                .endDate(LocalDate.of(2025, 1, 3))
+                .destination("Seoul")
+                .build();
+
+        // When
+        group.update("새로운 이름", LocalDate.of(2025, 2, 1),
+                LocalDate.of(2025, 2, 5), "Sejong");
+
+        // Then
+        assertThat(group.getName()).isEqualTo("새로운 이름");
+        assertThat(group.getDestination()).isEqualTo("Sejong");
+        assertThat(group.getStartDate()).isEqualTo(LocalDate.of(2025, 2, 1));
+    }
+
+    @Test
     @DisplayName("GroupMember Entity 생성 확인")
     void groupMemberBuilderTest() {
         Group group = Group.builder().name("Group").build();

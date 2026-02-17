@@ -8,7 +8,9 @@ import com.safely.domain.group.repository.GroupMemberRepository;
 import com.safely.domain.group.repository.GroupRepository;
 import com.safely.domain.member.entity.Member;
 import com.safely.domain.member.repository.MemberRepository;
-import com.safely.global.exception.NotFoundException;
+import com.safely.global.exception.common.EntityNotFoundException;
+import com.safely.global.exception.group.AlreadyJoinedGroupException;
+import com.safely.global.exception.group.InvalidInviteCodeException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -91,10 +93,84 @@ class GroupServiceUnitTest {
 
         // 2. When & Then (예외 발생 확인)
         assertThatThrownBy(() -> groupService.createGroup(invalidMemberId, request))
-                .isInstanceOf(NotFoundException.class); // [수정] IllegalArgumentException -> NotFoundException
-        // .hasMessage("존재하지 않는 회원입니다."); // [삭제] NotFoundException은 별도 메시지가 없으므로 제거
+                .isInstanceOf(EntityNotFoundException.class);
 
         // Verify: 예외가 발생했으므로 그룹 저장은 호출되면 안 됨.
         verify(groupRepository, times(0)).save(any());
+    }
+
+    @Test
+    @DisplayName("그룹 가입 성공: 초대 코드가 일치하면 멤버로 추가된다.")
+    void joinGroupByCode_Success() {
+        // Given
+        Long memberId = 1L;
+        String inviteCode = "AB12CD34";
+
+        Member member = Member.builder().id(memberId).name("참여자").build();
+        // 이미 멤버가 있는지 확인할 때 사용될 빈 리스트
+        Group group = Group.builder()
+                .name("테스트 여행")
+                .startDate(LocalDate.now())
+                .endDate(LocalDate.now().plusDays(3))
+                .build();
+
+        // Reflection을 사용하여 private 필드인 id에 강제로 값을 넣음.
+        ReflectionTestUtils.setField(group, "id", 100L);
+
+        given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
+        given(groupRepository.findByInviteCode(inviteCode)).willReturn(Optional.of(group));
+
+        // When
+        groupService.joinGroupByCode(memberId, inviteCode);
+
+        // Then
+        // 그룹 멤버로 저장(save)이 일어났는지 확인
+        ArgumentCaptor<GroupMember> captor = ArgumentCaptor.forClass(GroupMember.class);
+        verify(groupMemberRepository).save(captor.capture());
+
+        assertThat(captor.getValue().getRole()).isEqualTo(GroupRole.MEMBER); // 일반 멤버인지 확인
+        assertThat(captor.getValue().getGroup()).isEqualTo(group);
+    }
+
+    @Test
+    @DisplayName("그룹 가입 실패: 이미 가입된 유저는 예외 발생")
+    void joinGroupByCode_Fail_AlreadyJoined() {
+        // Given
+        Long memberId = 1L;
+        String inviteCode = "CODE1234";
+        Member member = Member.builder().id(memberId).build();
+
+        // 이미 가입된 상태 시뮬레이션
+        Group group = Group.builder()
+                .name("테스트 여행")
+                .startDate(LocalDate.now())
+                .endDate(LocalDate.now().plusDays(3))
+                .build();
+
+        // Reflection을 사용하여 private 필드인 id에 강제로 값을 넣음.
+        ReflectionTestUtils.setField(group, "id", 100L);
+
+        GroupMember existingMember = GroupMember.builder().group(group).member(member).build();
+        group.getGroupMembers().add(existingMember); // 그룹에 멤버 추가해둠
+
+        given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
+        given(groupRepository.findByInviteCode(inviteCode)).willReturn(Optional.of(group));
+
+        // When & Then
+        assertThatThrownBy(() -> groupService.joinGroupByCode(memberId, inviteCode))
+                .isInstanceOf(AlreadyJoinedGroupException.class);
+    }
+
+    @Test
+    @DisplayName("그룹 가입 실패: 초대 코드가 틀리면 예외 발생")
+    void joinGroupByCode_Fail_InvalidCode() {
+        // Given
+        String invalidCode = "WRONG";
+        given(memberRepository.findById(any())).willReturn(Optional.of(Member.builder().build()));
+        given(groupRepository.findByInviteCode(invalidCode)).willReturn(Optional.empty()); // 못 찾음
+
+        // When & Then
+        assertThatThrownBy(() -> groupService.joinGroupByCode(1L, invalidCode))
+                .isInstanceOf(InvalidInviteCodeException.class);
     }
 }
