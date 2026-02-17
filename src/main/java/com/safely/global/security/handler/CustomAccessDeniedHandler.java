@@ -19,7 +19,6 @@ import java.time.LocalDateTime;
 @Component
 @RequiredArgsConstructor
 public class CustomAccessDeniedHandler implements AccessDeniedHandler {
-
     private final ObjectMapper objectMapper;
 
     @Override

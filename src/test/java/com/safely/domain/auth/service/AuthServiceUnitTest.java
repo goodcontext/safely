@@ -128,8 +128,6 @@ class AuthServiceUnitTest {
         assertThat(response.accessToken()).isEqualTo("access-token");
         assertThat(response.refreshToken()).isEqualTo("refresh-token");
 
-        // Verify: Redis에 Refresh 토큰 저장 로직이 호출되었는지 확인
-        // eq는 set명령의 결괏값과 비교하는 것이 아니고, 인숫값으로 value값들을(10000L 같은 값들) 받았는지 비교함.
         verify(valueOperations).set(
                 eq("refresh:" + member.getId()),
                 eq("refresh-token"),
@@ -241,7 +239,7 @@ class AuthServiceUnitTest {
         authService.logout(accessToken);
 
         // Then
-        // 1. Access Token 블랙리스트 추가 확인
+        // Access Token 블랙리스트 추가 확인
         verify(valueOperations).set(
                 eq("blacklist:access:" + accessToken),
                 eq("logout"),
@@ -249,7 +247,7 @@ class AuthServiceUnitTest {
                 eq(TimeUnit.MILLISECONDS)
         );
 
-        // 2. Refresh Token 삭제 확인
-        verify(redisTemplate).delete("refresh:" + userId); // delete는 아까 삭제 했었니? 하고 질의하는 것.
+        // Refresh Token 삭제 확인
+        verify(redisTemplate).delete("refresh:" + userId);
     }
 }

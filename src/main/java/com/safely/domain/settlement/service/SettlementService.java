@@ -31,25 +31,21 @@ public class SettlementService {
     private final SettlementRepository settlementRepository;
     private final GroupRepository groupRepository;
 
-    // 1. 정산 프리뷰 (DB 저장 X, 계산 결과만 반환)
+    // 정산 프리뷰 (DB 저장 X, 계산 결과만 반환)
     public List<SettlementResponse> getSettlementPreview(Long groupId) {
-        // 그룹 멤버와 지출 내역 조회
         List<GroupMember> groupMembers = findGroupMembers(groupId);
 
-        // 여기서 null 값 처리를 안 하는 이유는 List나 set은 값이 없을 경우 비어있는 리스트를 반환하기 때문임.
         List<Expense> expenses = expenseRepository.findAllByGroupId(groupId);
 
-        // 계산 로직 수행
         Map<Member, Long> resultMap = calculateSettlement(groupMembers, expenses);
         log.info("[*] 정산 프리뷰 계산 완료: GroupID={}, MemberCount={}", groupId, groupMembers.size());
 
-        // 결과 DTO 변환 및 반환
         return resultMap.entrySet().stream()
                 .map(entry -> SettlementResponse.of(entry.getKey(), entry.getValue()))
                 .toList();
     }
 
-    // 2. 정산 완료 (계산 후 DB 저장)
+    // 정산 완료 (계산 후 DB 저장)
     @Transactional
     public void completeSettlement(Long groupId) {
         Group group = groupRepository.findById(groupId)
@@ -82,12 +78,6 @@ public class SettlementService {
         log.info("[+] 정산 확정 및 저장 완료: GroupID={}", groupId);
     }
 
-    // 3. 정산 취소 (0원으로 초기화)
-    // 여기서 settlementRepository.save(settlement);를 수행하지 않는 이유는 영속성 컨텍스트의 변경감지(Dirty Checking) 기능 때문임.
-    // @Transactional 어노테이션 때문에, 영속성 컨텍스트가 활성화 되는데, 메서드 종료 시점에 JPA는 "최초 시점"과 "현재 객체 상태"를 비교.
-    // 변경된 부분(Dirty)이 감지되면, JPA가 알아서 UPdATE SQL을 생성하여 DB에 날림.
-    // 따라서, 조회한 엔티티의 값을 수정하는 로직에서는 save()를 명시적으로 호출하지 않는 것이 JPA의 표준 관례(Idiom)임.
-    // 만약, @Transactional 어노테이션이 없으면 save()가 필요함.
     @Transactional
     public void cancelSettlement(Long groupId) {
         List<Settlement> settlements = settlementRepository.findAllByGroupId(groupId);
@@ -98,13 +88,11 @@ public class SettlementService {
         log.info("[-] 정산 내역 초기화(취소) 완료: GroupID={}", groupId);
     }
 
-    // 헬퍼 메서드
     private List<GroupMember> findGroupMembers(Long groupId) {
-        // 그룹 멤버 + 회원 정보(이름, 이메일 등)를 한 방 쿼리로 가져옴. (N+1문제 방지)
         return groupMemberRepository.findAllByGroupIdWithMember(groupId);
     }
 
-    // 정산 알고리즘 (핵심)
+    // 정산 알고리즘
     private Map<Member, Long> calculateSettlement(List<GroupMember> groupMembers, List<Expense> expenses) {
         Map<Member, Long> balanceMap = new HashMap<>();
 

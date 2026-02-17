@@ -15,7 +15,7 @@ public record GroupDetailResponse(
         List<GroupMemberDto> members
 ) {
     public static GroupDetailResponse of(Group group, List<GroupMember> members) {
-        List<GroupMemberDto> memberDtos = members.stream()
+        List<GroupMemberDto> memberList = members.stream()
                 .map(GroupMemberDto::from)
                 .toList();
 
@@ -26,11 +26,10 @@ public record GroupDetailResponse(
                 group.getEndDate(),
                 group.getDestination(),
                 group.getInviteCode(),
-                memberDtos
+                memberList
         );
     }
 
-    // 내부 클래스 또는 별도 파일로 분리 가능
     public record GroupMemberDto(Long memberId, String name, String profileImage, String role) {
         public static GroupMemberDto from(GroupMember gm) {
             return new GroupMemberDto(

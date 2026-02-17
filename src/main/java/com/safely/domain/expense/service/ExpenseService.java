@@ -39,7 +39,6 @@ public class ExpenseService {
         Member payer = memberRepository.findById(request.payerId())
                 .orElseThrow(EntityNotFoundException::new);
 
-        // 지출 엔티티 생성
         Expense expense = Expense.builder()
                 .group(group)
                 .payer(payer)
@@ -58,14 +57,12 @@ public class ExpenseService {
         return expense.getId();
     }
 
-    // 2. 지출 내역 목록 조회
     public List<ExpenseResponse> getExpenses(Long groupId) {
         return expenseRepository. findAllByGroupId(groupId).stream()
                 .map(ExpenseResponse::from)
                 .toList();
     }
 
-    // 3. 지출 내역 수정
     @Transactional
     @Retryable(
             retryFor = ObjectOptimisticLockingFailureException.class,
@@ -87,16 +84,13 @@ public class ExpenseService {
         // 기본 정보 업데이트
         expense.update(newPayer, request.amount(), request.location(), request.category(), request.spentDate());
 
-        // 기존 참여자 목록 삭제 후 재생성 (가장 깔끔한 갱신 방법)
+        // 기존 참여자 목록 삭제 후 재생성
         expense.clearParticipants();
         distributeAmountAndSaveParticipants(expense, request.amount(), request.participantMemberIds());
 
         log.info("[*] 지출 내역 수정 완료: ExpenseID={}, ModifierID={}", expenseId, request.payerId());
-
-        // 트랜잭션이 끝날 때 버전 체크가 일어납니다. 실패하면 @Retryable이 잡아줍니다.
     }
 
-    // 4. 지출 내역 삭제
     @Transactional
     public void deleteExpense(Long groupId, Long expenseId) {
         Expense expense = expenseRepository.findById(expenseId)
