@@ -1,6 +1,8 @@
 package com.safely.global.security.config;
 
 import com.safely.global.security.filter.JwtAuthenticationFilter;
+import com.safely.global.security.handler.CustomAccessDeniedHandler;
+import com.safely.global.security.handler.CustomAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,6 +20,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SecurityConfig {
     private final JwtAuthenticationFilter jwtFilter;
+    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
+    private final CustomAccessDeniedHandler customAccessDeniedHandler;
 
     private final String[] authUrls = {
             "/",
@@ -67,6 +71,12 @@ public class SecurityConfig {
         http
                 .headers(headers -> headers
                         .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin)
+                );
+
+        http
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(customAuthenticationEntryPoint) // 인증 에러(401) 처리
+                        .accessDeniedHandler(customAccessDeniedHandler)          // 인가 에러(403) 처리
                 );
 
         http

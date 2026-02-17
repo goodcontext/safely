@@ -8,13 +8,19 @@ import com.safely.domain.group.repository.GroupMemberRepository;
 import com.safely.domain.group.repository.GroupRepository;
 import com.safely.domain.member.entity.Member;
 import com.safely.domain.member.repository.MemberRepository;
-import com.safely.global.exception.NotFoundException;
+import com.safely.global.exception.common.EntityNotFoundException;
+import com.safely.global.exception.group.AlreadyJoinedGroupException;
+import com.safely.global.exception.group.GroupPermissionDeniedException;
+import com.safely.global.exception.group.InvalidInviteCodeException;
+import com.safely.global.exception.group.NotGroupMemberException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -38,6 +44,8 @@ public class GroupService {
                 .build();
         groupMemberRepository.save(manager);
 
+        log.info("[+] 그룹 생성 완료: GroupID={}, GroupName={}, ManagerID={}",
+                savedGroup.getId(), savedGroup.getName(), memberId);
         return savedGroup.getId();
     }
 
@@ -58,6 +66,7 @@ public class GroupService {
         validateMemberInGroup(groupId, memberId); // 멤버인지 확인
 
         List<GroupMember> members = group.getGroupMembers();
+        log.info("[*] 그룹 상세 조회: GroupID={}, RequesterID={}", groupId, memberId);
         return GroupDetailResponse.of(group, members);
     }
 
@@ -73,6 +82,7 @@ public class GroupService {
                 request.endDate(),
                 request.destination()
         );
+        log.info("[*] 그룹 정보 수정 완료: GroupID={}, ModifierID={}", groupId, memberId);
     }
 
     // 5. 그룹 삭제 (관리자만 가능)
@@ -82,6 +92,7 @@ public class GroupService {
         validateManager(groupId, memberId);
 
         groupRepository.delete(group); // Cascade 설정으로 GroupMember도 삭제됨
+        log.info("[-] 그룹 삭제 완료: GroupID={}, DeletedBy={}", groupId, memberId);
     }
 
     // 6. 초대 코드로 그룹 가입
@@ -90,13 +101,17 @@ public class GroupService {
         Member member = getMember(memberId);
 
         Group group = groupRepository.findByInviteCode(inviteCode)
-                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 초대 코드입니다."));
+                .orElseThrow(() -> {
+                    log.warn("[!] 그룹 가입 실패: 유효하지 않은 초대 코드. MemberID={}, Code={}", memberId, inviteCode);
+                    return new InvalidInviteCodeException();
+                });
 
         // 이미 가입된 멤버인지 확인
         boolean isAlreadyMember = group.getGroupMembers().stream()
                 .anyMatch(gm -> gm.getMember().getId().equals(memberId));
         if (isAlreadyMember) {
-            throw new IllegalArgumentException("이미 가입된 그룹입니다.");
+            log.warn("[!] 그룹 가입 실패: 이미 가입된 그룹. MemberID={}, GroupID={}", memberId, group.getId());
+            throw new AlreadyJoinedGroupException();
         }
 
         GroupMember newMember = GroupMember.builder()
@@ -106,17 +121,18 @@ public class GroupService {
                 .memberName(member.getName())
                 .build();
         groupMemberRepository.save(newMember);
+        log.info("[+] 그룹 가입 완료: MemberID={}, GroupID={}", memberId, group.getId());
     }
 
     // --- 검증 및 조회 헬퍼 메서드 ---
     private Member getMember(Long memberId) {
         return memberRepository.findById(memberId)
-                .orElseThrow(NotFoundException::new);
+                .orElseThrow(EntityNotFoundException::new);
     }
 
     private Group getGroup(Long groupId) {
         return groupRepository.findById(groupId)
-                .orElseThrow(NotFoundException::new);
+                .orElseThrow(EntityNotFoundException::new);
     }
 
     private void validateMemberInGroup(Long groupId, Long memberId) {
@@ -127,17 +143,22 @@ public class GroupService {
         // O(N) : 100만 건 검색 시 100만 번 조회. Full Table Scan 시 걸리는 시간임. (느림)
         // O(N^2) : for문 이중 루프 시 걸리는 시간 (최악)
         if (!groupMemberRepository.existsByGroupIdAndMemberId(groupId, memberId)) {
-            throw new IllegalArgumentException("해당 그룹의 멤버가 아닙니다."); // 또는 권한 없음 예외
+            log.warn("[!] 접근 거부: 그룹 멤버가 아님. GroupID={}, MemberID={}", groupId, memberId);
+            throw new NotGroupMemberException();
         }
     }
 
     private void validateManager(Long groupId, Long memberId) {
         GroupMember gm = groupMemberRepository.findByGroupIdAndMemberId(groupId, memberId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 그룹의 멤버가 아닙니다."));
+                .orElseThrow(() -> {
+                    log.warn("[!] 권한 없음: 그룹 멤버 정보 조회 불가. GroupID: {}, MemberID: {}", groupId, memberId);
+                    return new NotGroupMemberException();
+                });
 
         // 관리자 권한 체크
         if (gm.getRole() != GroupRole.MANAGER) {
-            throw new IllegalArgumentException("그룹 관리자만 수행할 수 있습니다.");
+            log.warn("[!] 권한 거부: 관리자 권한 필요. GroupID={}, MemberID={}", groupId, memberId);
+            throw new GroupPermissionDeniedException();
         }
     }
 }

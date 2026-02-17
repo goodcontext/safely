@@ -4,6 +4,10 @@ import com.safely.domain.auth.dto.*;
 import com.safely.domain.auth.entity.CustomUserDetails;
 import com.safely.domain.member.entity.Member;
 import com.safely.domain.member.repository.MemberRepository;
+import com.safely.global.exception.auth.EmailDuplicateException;
+import com.safely.global.exception.auth.InvalidTokenException;
+import com.safely.global.exception.auth.RefreshTokenNotFoundException;
+import com.safely.global.exception.common.EntityNotFoundException;
 import com.safely.global.security.jwt.JwtProvider;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -87,8 +91,7 @@ class AuthServiceUnitTest {
 
         // When & Then
         assertThatThrownBy(() -> authService.signup(request))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("이미 사용 중인 이메일입니다.");
+                .isInstanceOf(EmailDuplicateException.class);
 
         // Verify: 저장은 호출되면 안 됨
         verify(memberRepository, times(0)).save(any());
@@ -166,6 +169,58 @@ class AuthServiceUnitTest {
 
         // Verify: Redis 업데이트 확인
         verify(valueOperations).set(eq("refresh:" + userId), eq("new-refresh"), anyLong(), any());
+    }
+
+    @Test
+    @DisplayName("토큰 재발급 실패: 유효하지 않은 Refresh Token이면 예외 발생")
+    void reIssue_Fail_InvalidToken() {
+        // Given
+        String invalidToken = "invalid-token";
+        given(jwtProvider.validateToken(invalidToken)).willReturn(false); // 유효성 검증 실패
+
+        // When & Then
+        assertThatThrownBy(() -> authService.reIssue(new RefreshTokenRequest(invalidToken)))
+                .isInstanceOf(InvalidTokenException.class);
+    }
+
+    @Test
+    @DisplayName("토큰 재발급 실패: Redis에 저장된 토큰과 다르면(탈취 의심) 예외 발생")
+    void reIssue_Fail_TokenMismatch() {
+        // Given
+        String requestToken = "request-token";
+        String storedToken = "other-stored-token"; // Redis에는 다른 값이 있음
+        Long userId = 1L;
+
+        given(jwtProvider.validateToken(requestToken)).willReturn(true);
+        given(jwtProvider.getSubject(requestToken)).willReturn(String.valueOf(userId));
+
+        given(redisTemplate.opsForValue()).willReturn(valueOperations);
+        given(valueOperations.get("refresh:" + userId)).willReturn(storedToken); // 불일치
+
+        // When & Then
+        assertThatThrownBy(() -> authService.reIssue(new RefreshTokenRequest(requestToken)))
+                .isInstanceOf(RefreshTokenNotFoundException.class);
+    }
+
+    @Test
+    @DisplayName("토큰 재발급 실패: 토큰은 맞는데 회원이 DB에 없으면(탈퇴 등) 예외 발생")
+    void reIssue_Fail_MemberNotFound() {
+        // Given
+        String token = "valid-token";
+        Long userId = 1L;
+
+        given(jwtProvider.validateToken(token)).willReturn(true);
+        given(jwtProvider.getSubject(token)).willReturn(String.valueOf(userId));
+
+        given(redisTemplate.opsForValue()).willReturn(valueOperations);
+        given(valueOperations.get("refresh:" + userId)).willReturn(token); // 일치
+
+        // DB 조회 실패 (Optional.empty)
+        given(memberRepository.findById(userId)).willReturn(Optional.empty());
+
+        // When & Then
+        assertThatThrownBy(() -> authService.reIssue(new RefreshTokenRequest(token)))
+                .isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test

@@ -10,8 +10,10 @@ import com.safely.domain.member.entity.Member;
 import com.safely.domain.settlement.dto.SettlementResponse;
 import com.safely.domain.settlement.entity.Settlement;
 import com.safely.domain.settlement.repository.SettlementRepository;
-import com.safely.global.exception.NotFoundException;
+import com.safely.global.exception.ErrorCode;
+import com.safely.global.exception.common.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -38,6 +41,7 @@ public class SettlementService {
 
         // 계산 로직 수행
         Map<Member, Long> resultMap = calculateSettlement(groupMembers, expenses);
+        log.info("[*] 정산 프리뷰 계산 완료: GroupID={}, MemberCount={}", groupId, groupMembers.size());
 
         // 결과 DTO 변환 및 반환
         return resultMap.entrySet().stream()
@@ -49,7 +53,7 @@ public class SettlementService {
     @Transactional
     public void completeSettlement(Long groupId) {
         Group group = groupRepository.findById(groupId)
-                .orElseThrow(NotFoundException::new);
+                .orElseThrow(() -> new EntityNotFoundException(ErrorCode.GROUP_NOT_FOUND));
 
         List<GroupMember> groupMembers = findGroupMembers(groupId);
         List<Expense> expenses = expenseRepository.findAllByGroupId(groupId);
@@ -75,6 +79,7 @@ public class SettlementService {
             settlement.update(netAmount, true);
             settlementRepository.save(settlement);
         }
+        log.info("[+] 정산 확정 및 저장 완료: GroupID={}", groupId);
     }
 
     // 3. 정산 취소 (0원으로 초기화)
@@ -90,6 +95,7 @@ public class SettlementService {
             // 초기화 (netAmount=0, isSettled=false, settledAt=null)
             settlement.update(0L, false);
         }
+        log.info("[-] 정산 내역 초기화(취소) 완료: GroupID={}", groupId);
     }
 
     // 헬퍼 메서드

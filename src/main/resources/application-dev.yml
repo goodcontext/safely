@@ -17,8 +17,14 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create-drop
-    show-sql: true
+    show-sql: false # stdout으로 출력하지 않고 logback을 통해 출력하도록 false 권장
     defer-datasource-initialization: true
+    properties:
+      hibernate:
+        format_sql: true             # SQL을 예쁘게 정렬하여 출력
+        highlight_sql: true          # SQL 키워드에 색상 부여 (터미널 가독성 향상)
+        use_sql_comments: true       # 쿼리가 어떤 비즈니스 로직에서 발생했는지 주석 추가
+        default_batch_fetch_size: 100 # N+1 문제 완화를 위한 성능 최적화 옵션 (강력 추천)
 
   sql:
     init:
@@ -45,5 +51,7 @@ jwt:
 
 logging:
   level:
-    org.springframework: DEBUG
-    com.safely: DEBUG
+    root: info
+    com.safely: info
+    org.hibernate.SQL: debug
+    org.hibernate.orm.jdbc.bind: trace
