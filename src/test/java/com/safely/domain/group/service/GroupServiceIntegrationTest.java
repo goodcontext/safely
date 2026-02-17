@@ -41,7 +41,7 @@ class GroupServiceIntegrationTest {
     @Test
     @DisplayName("통합: 그룹 생성 시 멤버가 MANAGER로 등록되고 날짜가 저장된다.")
     void createGroup_Integration() {
-        // 1. Given
+        // Given
         Member member = memberRepository.save(Member.builder()
                 .email("maker@safely.com")
                 .password("1234")
@@ -56,14 +56,14 @@ class GroupServiceIntegrationTest {
                 .destination("Jeju")
                 .build();
 
-        // 2. When
+        // When
         Long groupId = groupService.createGroup(member.getId(), request);
 
         // 영속성 컨텍스트 초기화 (DB 반영 및 캐시 삭제)
         em.flush();
         em.clear();
 
-        // 3. Then
+        // Then
         Group savedGroup = groupRepository.findById(groupId).orElseThrow();
         assertThat(savedGroup.getName()).isEqualTo("제주도 여행");
 
@@ -79,7 +79,7 @@ class GroupServiceIntegrationTest {
     @Test
     @DisplayName("실패: 존재하지 않는 회원이 그룹을 생성하려 하면 예외가 발생한다.")
     void createGroup_Fail_MemberNotFound() {
-        // 1. Given
+        // Given
         Long invalidMemberId = 999999L;
 
         GroupCreateRequest request = GroupCreateRequest.builder()
@@ -88,7 +88,7 @@ class GroupServiceIntegrationTest {
                 .endDate(LocalDate.now().plusDays(1))
                 .build();
 
-        // 2. When & Then
+        // When & Then
         assertThatThrownBy(() -> groupService.createGroup(invalidMemberId, request))
                 .isInstanceOf(EntityNotFoundException.class); // 예외 타입 변경
     }
@@ -96,7 +96,7 @@ class GroupServiceIntegrationTest {
     @Test
     @DisplayName("실패: 그룹 이름 등 필수 데이터가 누락되면 DB 예외가 발생한다.")
     void createGroup_Fail_DataIntegrity() {
-        // 1. Given
+        // Given
         Member member = memberRepository.save(Member.builder()
                 .email("integrity@test.com")
                 .password("1234")
@@ -112,7 +112,7 @@ class GroupServiceIntegrationTest {
                 .endDate(LocalDate.now())
                 .build();
 
-        // 2. When & Then
+        // When & Then
         // 스프링 데이터 JPA는 DB 제약조건 위반 시 DataIntegrityViolationException을 던짐
         assertThatThrownBy(() -> groupService.createGroup(member.getId(), badRequest))
                 .isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
@@ -136,7 +136,7 @@ class GroupServiceIntegrationTest {
 
         // 검증
         em.flush();
-        em.clear(); // DB 반영 후 캐시 비움
+        em.clear();
 
         boolean isMember = groupMemberRepository.existsByGroupIdAndMemberId(groupId, joiner.getId());
         assertThat(isMember).isTrue();

@@ -36,12 +36,12 @@ public class JwtProvider {
         Date expiry = new Date(now.getTime() + jwtProperties.getAccessTokenExpireMs());
 
         return Jwts.builder()
-                .subject(String.valueOf(userId))          // setSubject() → subject()
+                .subject(String.valueOf(userId))
                 .claim("username", username)
                 .claim("role", role)
                 .issuedAt(now)
                 .expiration(expiry)
-                .signWith(key)                             // Deprecated 아님 (새 방식)
+                .signWith(key)
                 .compact();
     }
 

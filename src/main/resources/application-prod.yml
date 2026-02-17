@@ -6,7 +6,6 @@ spring:
   config:
     activate:
       on-profile: prod
-    # [핵심] AWS 파라미터 스토어의 값들을 내 설정처럼 불러옴
     import: "aws-parameterstore:/config/safely/"
 
   application:

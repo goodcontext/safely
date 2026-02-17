@@ -49,7 +49,6 @@ public class Group extends BaseEntity {
         this.inviteCode = UUID.randomUUID().toString().substring(0, 8).toUpperCase(); // 8자리 랜덤 코드 생성
     }
 
-    // 그룹 정보 수정 메서드
     public void update(String name, LocalDate startDate, LocalDate endDate, String destination) {
         this.name = name;
         this.startDate = startDate;

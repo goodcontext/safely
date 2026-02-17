@@ -40,7 +40,6 @@ public class SecurityConfig {
         return configuration.getAuthenticationManager();
     }
 
-    // PasswordEncoder는 인터페이스이고, BCryptPasswordEncoder는 PasswordEncoder의 구현체이므로 이렇게 해도 정상작동함.
     @Bean
     public BCryptPasswordEncoder bCryptPasswordEncoder() {
         return new BCryptPasswordEncoder();
@@ -55,7 +54,6 @@ public class SecurityConfig {
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable);
 
-        // JWT를 사용하면 STATELESS를 반드시 명시하는 게 좋다고 함. (출처 : ChatGPT-5.1)
         http
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -67,7 +65,6 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 );
 
-        // h2-console에 접근할 때, localhost 접근이 거부되었습니다. 해결할 때 사용함. iframe 태그 사용 시 접근 허용 코드.
         http
                 .headers(headers -> headers
                         .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin)

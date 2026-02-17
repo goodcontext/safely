@@ -29,7 +29,6 @@ public record SettlementResponse(
         );
     }
 
-    // Entity -> DTO 변환
     public static SettlementResponse from(Settlement settlement) {
         return SettlementResponse.of(settlement.getMember(), settlement.getNetAmount());
     }

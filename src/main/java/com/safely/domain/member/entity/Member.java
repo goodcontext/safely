@@ -36,7 +36,6 @@ public class Member extends BaseEntity {
     @Column(nullable = false, length = 50)
     private String authority;
 
-    // 회원 정보 수정
     public void updateProfile(String name, String profileImage) {
         if (name != null && !name.isBlank()) {
             this.name = name;
@@ -46,7 +45,6 @@ public class Member extends BaseEntity {
         }
     }
 
-    // 비밀번호 변경
     public void updatePassword(String encodedPassword) {
         this.password = encodedPassword;
     }

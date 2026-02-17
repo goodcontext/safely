@@ -29,6 +29,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
 class GroupServiceUnitTest {
@@ -45,33 +46,33 @@ class GroupServiceUnitTest {
     @Test
     @DisplayName("성공: 그룹 생성 시 Repository들이 정상적으로 호출되고 MANAGER가 설정된다.")
     void createGroup_Success() {
-        // 1. Given (준비)
+        // Given
         Long memberId = 1L;
         Member member = Member.builder().id(memberId).name("작성자").build();
 
         // DTO 준비
-        GroupCreateRequest request = new GroupCreateRequest();
-        ReflectionTestUtils.setField(request, "name", "테스트 여행");
-        ReflectionTestUtils.setField(request, "startDate", LocalDate.now());
-        ReflectionTestUtils.setField(request, "endDate", LocalDate.now());
+        GroupCreateRequest request = new GroupCreateRequest(
+                "테스트 여행",
+                LocalDate.now(),
+                LocalDate.now(),
+                "서울"
+        );
 
-        // Mocking: 리포지토리가 어떻게 행동할지 정의
+        // Mocking
         given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
 
+        // Entity 준비
         Group savedGroup = request.toEntity();
         ReflectionTestUtils.setField(savedGroup, "id", 100L);
         given(groupRepository.save(any(Group.class))).willReturn(savedGroup);
 
-        // 2. when (실행)
+        // when
         Long resultGroupId = groupService.createGroup(memberId, request);
 
-        // 3. then (검증)
+        // then
         assertThat(resultGroupId).isEqualTo(100L);
-
-        // Verify: groupRepository.save()가 한 번 호출되었는지 확인
         verify(groupRepository, times(1)).save(any(Group.class));
 
-        //Verify: groupMemberRepository.save()가 호출될 때 ,들어간 데이터가 MANAGER인지 확인 (ArgumentCaptor 사용)
         ArgumentCaptor<GroupMember> captor = ArgumentCaptor.forClass(GroupMember.class);
         verify(groupMemberRepository, times(1)).save(captor.capture());
 
@@ -84,19 +85,24 @@ class GroupServiceUnitTest {
     @Test
     @DisplayName("실패: 존재하지 않는 회원이면 예외가 발생한다.")
     void createGroup_Fail_MemberNotFound() {
-        // 1. Given
+        // Given
         Long invalidMemberId = 900L;
-        GroupCreateRequest request = new GroupCreateRequest();
 
-        // Mocking: 회원을 찾으면 빈값(Optional.empty)을 제공
+        GroupCreateRequest request = new GroupCreateRequest(
+                "실패 테스트용 여행",
+                LocalDate.now(),
+                LocalDate.now(),
+                "어디든지"
+        );
+
         given(memberRepository.findById(invalidMemberId)).willReturn(Optional.empty());
 
-        // 2. When & Then (예외 발생 확인)
+        // When & Then (예외 발생 확인)
         assertThatThrownBy(() -> groupService.createGroup(invalidMemberId, request))
                 .isInstanceOf(EntityNotFoundException.class);
 
         // Verify: 예외가 발생했으므로 그룹 저장은 호출되면 안 됨.
-        verify(groupRepository, times(0)).save(any());
+        verify(groupRepository, never()).save(any());
     }
 
     @Test
