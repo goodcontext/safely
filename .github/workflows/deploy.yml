@@ -3,6 +3,7 @@ name: Safely CI/CD
 on:
   push:
     branches: [ "main" ]
+  workflow_dispatch:  # 수동 실행 허용
 
 permissions:
   id-token: write   # OIDC 사용 시 필수적인 구문임.
