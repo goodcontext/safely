@@ -19,7 +19,6 @@ spring:
     init:
       mode: always
 
-  # Redis 설정 (테스트에서는 리포지토리 비활성화)
   data:
     redis:
       repositories:
@@ -32,23 +31,21 @@ spring:
       max-file-size: 10MB
       max-request-size: 10MB
 
-  # 가짜 AWS 설정 (S3_BUCKET 오류 및 빈 생성 실패 해결)
   cloud:
     aws:
-      s3:
-        bucket: test-bucket-dummy
       region:
         static: ap-northeast-2
-      credentials:
-        access-key: test-access-key
-        secret-key: test-secret-key
       stack:
         auto: false
 
+aws:
+  s3:
+    bucket: test-bucket-dummy
+
 jwt:
   secret-key: "test-very-long-secret-key-for-unit-tests-must-be-secure"
-  access-token-expire-ms: 6000 # 10분
-  refresh-token-expire-ms: 1200000 # 20분
+  access-token-expire-ms: 60000
+  refresh-token-expire-ms: 1200000
 
 logging:
   level:
