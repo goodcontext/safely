@@ -8,16 +8,15 @@ spring:
       max-request-size: 10MB
 
   jpa:
-    open-in-view: false # 성능 최적화를 위해 false 권장
+    open-in-view: false
     properties:
       hibernate:
         format_sql: true
 
-  cloud:
-    aws:
-      s3:
-        bucket: ${S3_BUCKET}
-      region:
-        static: ap-northeast-2
+  profiles:
+    active: dev
 
-spring.profiles.active: dev
+cloud:
+  aws:
+    region:
+      static: ap-northeast-2

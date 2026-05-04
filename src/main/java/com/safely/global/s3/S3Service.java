@@ -22,7 +22,7 @@ import java.util.UUID;
 public class S3Service {
     private final S3Template s3Template;
 
-    @Value("${spring.cloud.aws.s3.bucket}")
+    @Value("${aws.s3.bucket}")
     private String bucketName;
 
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of(".jpg", ".jpeg", ".png", ".gif", ".webp");
