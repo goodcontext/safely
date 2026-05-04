@@ -8,14 +8,9 @@ spring:
       on-profile: prod
     import: "aws-parameterstore:/config/safely/"
 
-  application:
-    name: safely
-
   datasource:
-    # url 삭제됨 (파라미터 스토어에서 자동 주입)
     driver-class-name: com.mysql.cj.jdbc.Driver
-    # username 삭제됨 (파라미터 스토어에서 자동 주입)
-    # password 삭제됨 (파라미터 스토어에서 자동 주입)
+    # url, username, password는 AWS SSM에서 자동 주입
 
   jpa:
     hibernate:
@@ -24,12 +19,15 @@ spring:
 
   data:
     redis:
-      # Host, Port는 docker-compose.yml에서 받음
-      host: ${REDIS_HOST}
-      port: ${REDIS_PORT}
-      # password 삭제됨(redis 서버는 도커 컨테이너로 사이드카 방식을 사용하므로 REDIS PORT로의 외부 접속만 차단하면 되어서 비번 삭제함)
-
-# jwt: 삭제됨 (파라미터 스토어에서 자동 주입)
+      # host, port, password는 SSM에서 자동 주입
+      ssl:
+        enabled: true   # ElastiCache TLS 활성화
+      timeout: 3000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 2
 
 logging:
   level:
