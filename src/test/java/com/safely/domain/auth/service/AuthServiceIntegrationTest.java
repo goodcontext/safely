@@ -8,7 +8,6 @@ import com.safely.domain.auth.entity.CustomUserDetails;
 import com.safely.domain.member.entity.Member;
 import com.safely.domain.member.repository.MemberRepository;
 import com.safely.global.exception.auth.EmailDuplicateException;
-import com.safely.global.exception.auth.InvalidTokenException;
 import com.safely.global.exception.auth.RefreshTokenNotFoundException;
 import com.safely.global.exception.common.EntityNotFoundException;
 import com.safely.global.security.jwt.JwtProvider;
@@ -18,7 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -45,10 +44,9 @@ class AuthServiceIntegrationTest {
     @Autowired AuthService authService;
     @Autowired MemberRepository memberRepository;
     @Autowired PasswordEncoder passwordEncoder;
-    @Autowired
-    JwtProvider jwtProvider;
+    @Autowired JwtProvider jwtProvider;
 
-    @MockitoBean RedisConnectionFactory redisConnectionFactory;
+    @MockitoBean LettuceConnectionFactory redisConnectionFactory;
     @MockitoBean RedisTemplate<String, String> redisTemplate;
     @MockitoBean ValueOperations<String, String> valueOperations;
     @MockitoBean AuthenticationManager authenticationManager;

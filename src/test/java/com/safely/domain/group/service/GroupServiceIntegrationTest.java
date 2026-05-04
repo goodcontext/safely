@@ -15,7 +15,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.redis.connection.RedisConnectionFactory; // 추가
+import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,7 +36,7 @@ class GroupServiceIntegrationTest {
     @Autowired EntityManager em;
 
     // GroupService 테스트지만 ApplicationContext가 뜰 때 Redis를 찾을 수 있으므로 안전장치 추가
-    @MockitoBean RedisConnectionFactory redisConnectionFactory;
+    @MockitoBean LettuceConnectionFactory redisConnectionFactory;
 
     @Test
     @DisplayName("통합: 그룹 생성 시 멤버가 MANAGER로 등록되고 날짜가 저장된다.")
