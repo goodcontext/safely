@@ -30,9 +30,6 @@
 
 ![Safely-디자인-시안](https://github.com/user-attachments/assets/d3d75ed3-e20a-43dc-abf1-0b5f7e4d3d26)
 
-## Deploy URL:
-http://safely-goodcontext.ap-northeast-2.elasticbeanstalk.com  
-
 ## 개발 기간
 - 1차 개발(MVP): 2025.11.23 ~ 2025.12.13  
 - 2차 개발(리빌딩): 2026.02.15 ~ ing
